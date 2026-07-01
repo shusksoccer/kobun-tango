@@ -137,6 +137,9 @@ select,.minibtn{font-family:inherit;font-size:14px;color:var(--ink);background:v
 .ex .yk{font-size:14px;color:var(--ink2);background:#efece2;border-radius:8px;padding:8px 11px;line-height:1.7}
 .ex .src{font-size:11.5px;color:var(--ink3);margin-top:5px}
 .blank{color:var(--suo);font-weight:700}
+.exred{color:var(--suo);font-weight:700}
+.exmask{color:transparent;background:var(--suo);border-radius:3px;cursor:pointer;padding:0 2px;transition:.15s;user-select:none;-webkit-user-select:none}
+.exmask.open{color:var(--ink);background:rgba(140,65,76,.15)}
 /* related */
 .rellabel{font-size:11px;letter-spacing:.1em;color:var(--ink2);font-weight:700;margin-bottom:7px}
 .relgroup{margin:7px 0;display:flex;flex-wrap:wrap;align-items:center;gap:6px}
@@ -242,6 +245,8 @@ const FLAG_C={'現代語とギャップ大':'#8c414c','現代語と少しズレ'
 function esc(s){return (s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
 function koUnder(s){return esc(s).replace(/\x01/g,'<u class="mk">').replace(/\x02/g,'</u>');}
 function blankify(s){return esc(s).replace(/〔[\s　]*[〕\]）]/g,'<span class="blank">〔　　　〕</span>');}
+function koRed(s){return esc(s).replace(/\x01/g,'<span class="exred">').replace(/\x02/g,'</span>');}
+function ykMask(yb,imi){return esc(yb).replace(/〔[\s　]*[〕\]）]/g,'<span class="exmask" onclick="this.classList.toggle(\'open\')" tabindex="0">'+esc(imi)+'</span>');}
 const known=new Set((()=>{try{return JSON.parse(localStorage.getItem('koten_known')||'[]')}catch(e){return[]}})());
 function saveKnown(){try{localStorage.setItem('koten_known',JSON.stringify([...known]))}catch(e){}}
 """
@@ -332,9 +337,10 @@ function card(w){
   const means=w.meanings.length>1?`<ol class="means">${w.meanings.map(m=>`<li>${esc(m)}</li>`).join('')}</ol>`
     :`<div class="means one">${esc(w.meanings[0]||'')}</div>`;
   const exN=w.examples.length, relN=(w.related||[]).length;
-  const ex=w.examples.map(e=>`<div class="ex"><div class="exno">${esc(e.imi)}</div>
-    <div class="ko mincho">${blankify(e.koBlank)}</div><div class="yk">${blankify(e.ykBlank)}</div>
-    <div class="src">出典：${esc(e.src||'—')}　/　答え：<b>${esc(e.imi)}</b></div></div>`).join('');
+  const ex=w.examples.map(e=>`<div class="ex">
+    <div class="ko mincho">${koRed(e.koU)}</div>
+    <div class="yk">${ykMask(e.ykBlank,e.imi)}</div>
+    <div class="src">出典：${esc(e.src||'—')}</div></div>`).join('');
   return `<article class="card${learned?' learned':''}" id="w${w.no}" style="--impc:${IMP_C[w.imp]}">
     <div class="ctop">
       <button class="known" data-no="${w.no}" aria-pressed="${learned}" aria-label="覚えた">${learned?'✓':''}</button>

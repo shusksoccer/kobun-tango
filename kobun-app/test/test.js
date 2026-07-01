@@ -20,7 +20,7 @@ const ok = (name, cond) => { (cond ? pass++ : fail++); console.log((cond ? 'PASS
   ok('index: meanings are citation form (w7 みゆ has 見られる)',
      [...doc.querySelectorAll('#w7 .means li')].some(li => li.textContent === '見られる'));
   ok('index: example answer keeps example form (見られ)',
-     [...doc.querySelectorAll('#w7 .ex .src b')].some(b => b.textContent === '見られ'));
+     [...doc.querySelectorAll('#w7 .ex .exmask')].some(span => span.textContent === '見られ'));
   // popup
   d.window.eval('openNote(1)');
   ok('index: note popup opens', !doc.querySelector('#noteModal').hidden);

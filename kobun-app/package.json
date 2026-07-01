@@ -1,0 +1,20 @@
+{
+  "dependencies": {
+    "jsdom": "^29.1.1"
+  },
+  "name": "kobun-app",
+  "version": "1.0.0",
+  "description": "高校生・受験生向けの古文単語学習サイト。**辞典ページ**と**暗記テストページ**の2枚を、ソース（Excel＋解説Markdown）から静的HTMLとして生成する。全330語。出力はオフラインで開ける単一HTML（データ埋め込み）。",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs",
+    "test": "test"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs"
+}
