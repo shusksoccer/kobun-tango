@@ -131,15 +131,24 @@ const ok = (name, cond) => { (cond ? pass++ : fail++); console.log((cond ? 'PASS
      w1meanings.some(m => okBtn.textContent.includes(m)));
   ok('quiz mc: distractors do not duplicate own meanings',
      btns.filter(b => b.dataset.ok !== '1').every(b => !w1meanings.some(m => b.textContent.includes(m))));
-  // wrong answer → weak persisted, next button appears
+  // hint (blanked translation) hidden until tapped, same as fwd mode
+  ok('quiz mc: hint hidden until tapped and contains blank',
+     doc.querySelector('#qhint').style.display === 'none' &&
+     doc.querySelector('#qhint').innerHTML.includes('blank'));
+  // answering reveals checklist + 覚えた/あいまい buttons (no auto-recording)
   btns.find(b => b.dataset.ok !== '1').click();
-  ok('quiz mc: wrong answer marks weak and reveals answer',
-     JSON.parse(w.localStorage.getItem('koten_weak') || '[]').includes(1) &&
-     !!doc.querySelector('#nextBtn') && !!doc.querySelector('#reveal .mlist'));
-  // correct answer → known recorded, weak cleared
+  ok('quiz mc: answer reveals checklist and 覚えた/あいまい buttons',
+     !!doc.querySelector('#reveal .mlist') &&
+     !!doc.querySelector('#againBtn') && !!doc.querySelector('#knowBtn') &&
+     !JSON.parse(w.localStorage.getItem('koten_weak') || '[]').includes(1));
+  doc.querySelector('#againBtn').click();
+  ok('quiz mc: あいまい persists weak',
+     JSON.parse(w.localStorage.getItem('koten_weak') || '[]').includes(1));
+  // 覚えた → known recorded, weak cleared
   w.eval("idx=deck.findIndex(x=>x.no===1);show();");
   doc.querySelector('.mcbtn[data-ok="1"]').click();
-  ok('quiz mc: correct answer records known and clears weak',
+  doc.querySelector('#knowBtn').click();
+  ok('quiz mc: 覚えた records known and clears weak',
      !JSON.parse(w.localStorage.getItem('koten_weak') || '[]').includes(1) &&
      Object.keys(JSON.parse(w.localStorage.getItem('koten_known_at') || '{}')).some(k => /^1:/.test(k)));
 }

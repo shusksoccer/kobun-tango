@@ -680,20 +680,19 @@ function mcBuild(w,correct){
   return shuffle(chosen.map((t,i)=>({t,ok:i===0})));}
 function mcAnswer(btn){const w=cur.w,e=cur.e;
   if($('#qbody').dataset.done)return;$('#qbody').dataset.done='1';
-  const hit=btn.dataset.ok==='1';
   $('#qbody').querySelectorAll('.mcbtn').forEach(b=>{
     if(b.dataset.ok==='1')b.classList.add('ok');else if(b===btn)b.classList.add('ng');
     b.disabled=true;});
-  if(hit){const i=e.mi||(w.meanings.length<=1?1:0);
-    if(i)addKnown(sk(w.no,i));else for(let k=1;k<=totalSenses(w);k++)addKnown(sk(w.no,k));
-    saveKnown();weakSet.delete(w.no);saveWeak();knownRun++;$('#kn').textContent=`覚えた ${knownRun}`;}
-  else{weak.push(w);weakSet.add(w.no);saveWeak();}
   $('#reveal').innerHTML=`<div class="qkolabel">意味（覚えたらチェック）</div>`+senseChecklist(w,e.mi||0)
     +`<div class="tr">訳：${esc((e.yk||'').replace(BLK,e.imi))}</div>`
     +`<a class="jump" href="index.html#w${w.no}">辞典で詳しく確認 →</a>`;
   $('#reveal').classList.add('show');bindSenseChecks($('#reveal'));
-  $('#btns').innerHTML='<button class="qb show" id="nextBtn">次へ</button>';
-  $('#nextBtn').onclick=next;}
+  /* 記録は他モードと同じ自己判定（覚えた／あいまい）で統一 */
+  $('#btns').innerHTML='<button class="qb again" id="againBtn">あいまい</button><button class="qb know" id="knowBtn">覚えた</button>';
+  $('#againBtn').onclick=()=>{weak.push(w);weakSet.add(w.no);saveWeak();next();};
+  $('#knowBtn').onclick=()=>{const i=e.mi||(w.meanings.length<=1?1:0);
+    if(i)addKnown(sk(w.no,i));else for(let k=1;k<=totalSenses(w);k++)addKnown(sk(w.no,k));
+    saveKnown();weakSet.delete(w.no);saveWeak();knownRun++;next();};}
 function allCloze(w){return w.examples.map(e=>{const n=midx(w,e.imi);
   return `<div class="qex"><span class="qexn">${n||'・'}</span><span class="qexko mincho">${blankify(e.koBlank)}${e.src?`<span class="qexsrc">（${esc(e.src)}）</span>`:''}</span></div>`;}).join('');}
 function show(){const w=deck[idx];cur.w=w;const e=w.examples[Math.random()*w.examples.length|0];cur.e=e;
@@ -710,7 +709,13 @@ function show(){const w=deck[idx];cur.w=w;const e=w.examples[Math.random()*w.exa
     const ch=mcBuild(w,correct);
     $('#qbody').innerHTML=`<div class="qkolabel">例文（古文）</div><div class="qko mincho">${koUnder(e.koU)}</div>`
       +`${e.src?`<div class="qsrc">出典：${srcLine(e.src)}</div>`:''}`
+      +`<button class="hintbtn" id="hintBtn">ヒント（訳）を見る ▾</button>`
+      +`<div class="qhintlabel" id="qhintlabel" style="display:none">訳（問われている語が空欄）</div>`
+      +`<div class="qhint" id="qhint" style="display:none">${blankify(e.ykBlank)}</div>`
       +`<div class="mcgrid">`+ch.map((c,i)=>`<button class="mcbtn" data-ok="${c.ok?1:0}"><span class="mck">${'アイウエ'[i]}</span>${esc(c.t)}</button>`).join('')+`</div>`;
+    $('#hintBtn').onclick=()=>{const h=$('#qhint'),l=$('#qhintlabel'),o=h.style.display==='none';
+      h.style.display=o?'':'none';l.style.display=o?'':'none';
+      $('#hintBtn').textContent=o?'ヒント（訳）を隠す ▴':'ヒント（訳）を見る ▾';};
     $('#qbody').querySelectorAll('.mcbtn').forEach(b=>b.onclick=()=>mcAnswer(b));
     $('#btns').innerHTML='';
     return;}
