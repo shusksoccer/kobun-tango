@@ -578,6 +578,8 @@ QUIZ_BODY = r"""
     <div class="field"><h4>意味テーマ（任意）</h4><div class="chips" id="fTheme"></div></div>
     <div class="field"><h4>覚え方タグ（任意）</h4><div class="chips" id="fFlag"></div></div>
     <div class="field"><div class="row">
+      <div><h4 style="margin:0 0 6px">出題範囲</h4>
+        <select id="scope"><option value="all">すべて</option><option value="unknown">未習のみ</option></select></div>
       <div><h4 style="margin:0 0 6px">問題数</h4>
         <select id="num"><option value="10">10問</option><option value="20">20問</option><option value="30">30問</option><option value="50">50問</option><option value="0">範囲すべて</option></select></div>
       <div><h4 style="margin:0 0 6px">順番</h4>
@@ -632,6 +634,7 @@ chips($('#fTheme'),DB.meta.theme,THEME_C,'theme');chips($('#fFlag'),DB.meta.flag
 $('#modebtns').querySelectorAll('.modebtn').forEach(b=>b.onclick=()=>{
   mode=b.dataset.m;$('#modebtns').querySelectorAll('.modebtn').forEach(x=>x.classList.toggle('on',x===b));});
 function pool(){return DB.words.filter(w=>{
+  if($('#scope').value==='unknown'&&wordFull(w))return false;
   if(sel.imp.size&&!sel.imp.has(w.imp))return false;
   if(sel.pos.size&&!sel.pos.has(w.pos))return false;
   if(sel.theme.size&&!w.themes.some(t=>sel.theme.has(t)))return false;
@@ -643,6 +646,7 @@ function updateReview(){const rw=reviewWords();
   const nW=rw.filter(w=>weakSet.has(w.no)).length;
   $('#reviewInfo').textContent=`${rw.length}語（あいまい ${nW}・期限切れ ${rw.length-nW}）`;}
 $('#reviewStart').onclick=()=>{const rw=reviewWords();if(rw.length)start(rw);};
+$('#scope').onchange=updateCount;
 updateCount();
 let deck=[],idx=0,knownRun=0,weak=[];
 function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[a[i],a[j]]=[a[j],a[i]];}return a;}

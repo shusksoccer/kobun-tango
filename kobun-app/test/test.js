@@ -172,6 +172,18 @@ const ok = (name, cond) => { (cond ? pass++ : fail++); console.log((cond ? 'PASS
      ['icon-192.png', 'icon-512.png', 'apple-touch-icon.png'].every(f => fs.existsSync(path.join(DIST, f))));
 }
 
+// ---- quiz scope filter (すべて / 未習のみ) ----
+{
+  const q = run('quiz.html'), w = q.window, doc = w.document;
+  ok('quiz: scope=すべて shows 330', doc.querySelector('#pcount').textContent === '330');
+  w.eval("const w1=DB.words[0];for(let i=1;i<=totalSenses(w1);i++)addKnown(sk(1,i));saveKnown();$('#scope').value='unknown';updateCount();");
+  ok('quiz: scope=未習のみ excludes fully-known words',
+     doc.querySelector('#pcount').textContent === '329' && w.eval('pool().every(x=>x.no!==1)'));
+  // partially known word stays in 未習のみ
+  w.eval("delKnown(sk(2,1));addKnown(sk(2,1));delKnown(sk(2,2));saveKnown();updateCount();");
+  ok('quiz: partially-known word remains in 未習のみ', w.eval('pool().some(x=>x.no===2)'));
+}
+
 // ---- quiz review queue (weak + expired known) ----
 {
   const qr = new JSDOM(fs.readFileSync(path.join(DIST, 'quiz.html'), 'utf8'),
