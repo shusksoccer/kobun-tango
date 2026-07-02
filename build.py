@@ -101,38 +101,51 @@ KEIGO={151:['尊敬'],152:['尊敬'],153:['尊敬'],154:['尊敬'],155:['謙譲'
  169:['謙譲','尊敬'],170:['謙譲'],171:['謙譲'],172:['謙譲'],173:['尊敬'],174:['尊敬'],
  175:['謙譲'],176:['尊敬'],177:['尊敬'],178:['尊敬'],179:['謙譲'],180:['謙譲']}
 
+# 意味テーマ（docs/TAG_GUIDE.md が定義・判断基準の正）。
+# 領域8種＋評価2種の10種、多ラベル（該当すれば重複付与）。中立・機能語は無印。
 TL={'LOVE':'恋・男女','DEATH':'病・死・別れ','BUD':'仏道・信仰','COURT':'宮廷・身分',
- 'BEAUTY':'美・優雅・情趣','GOOD':'よい評価','BAD':'わるい評価','PAIN':'心情・つらさ',
- 'AFF':'心情・いとしさ','ANX':'不安・気がかり','THINK':'思考・うわさ','TIME':'時・季節・自然','WORD':'ことば・学問'}
-THEME_ORDER=['LOVE','DEATH','BUD','COURT','BEAUTY','GOOD','BAD','PAIN','AFF','ANX','THINK','TIME','WORD']
-TH={1:['THINK'],2:['THINK'],3:['BUD'],4:['THINK'],5:['LOVE'],6:['PAIN'],7:['LOVE','THINK'],8:['LOVE'],
- 12:['AFF'],13:['AFF'],14:['GOOD','BAD'],15:['BEAUTY'],16:['GOOD','COURT'],17:['BAD','COURT'],
- 19:['THINK'],20:['ANX'],21:['GOOD'],22:['GOOD'],23:['PAIN'],24:['PAIN'],25:['PAIN'],26:['BEAUTY'],
- 29:['PAIN'],31:['TIME'],34:['BUD'],35:['WORD'],36:['WORD'],38:['BEAUTY','LOVE'],39:['LOVE'],
- 45:['TIME'],51:['BEAUTY'],54:['BEAUTY'],60:['THINK'],66:['DEATH','BUD'],69:['DEATH'],70:['PAIN'],
- 72:['DEATH'],73:['BUD'],74:['GOOD','BEAUTY'],75:['GOOD'],76:['COURT'],77:['GOOD','BAD'],78:['GOOD'],
- 79:['BEAUTY'],82:['BEAUTY'],84:['PAIN'],85:['ANX'],86:['PAIN','AFF'],87:['BAD'],88:['GOOD'],89:['LOVE'],
- 90:['BAD'],91:['BAD'],92:['BAD'],93:['BAD'],94:['BAD'],95:['BAD'],96:['BAD'],97:['PAIN'],98:['BAD'],
- 99:['COURT','BEAUTY'],100:['BEAUTY'],103:['TIME'],104:['BAD'],105:['LOVE'],107:['BAD'],108:['COURT'],
- 109:['COURT'],110:['BUD'],113:['BUD'],114:['THINK','LOVE'],115:['DEATH'],117:['TIME'],118:['TIME'],
- 121:['LOVE'],125:['WORD'],127:['TIME'],128:['TIME'],129:['TIME'],145:['TIME'],147:['THINK'],
- 181:['COURT'],184:['WORD'],188:['LOVE'],189:['LOVE'],195:['LOVE','COURT'],197:['DEATH'],198:['PAIN'],
- 199:['PAIN'],200:['PAIN'],201:['DEATH'],202:['DEATH'],203:['DEATH'],204:['DEATH'],205:['DEATH'],
- 209:['BAD'],210:['BEAUTY'],212:['LOVE','BEAUTY'],213:['BEAUTY'],214:['BEAUTY'],218:['GOOD'],
- 220:['ANX'],221:['PAIN','ANX'],223:['GOOD'],224:['BAD'],229:['BAD'],230:['PAIN'],231:['TIME'],
- 233:['PAIN'],234:['PAIN'],237:['BAD'],238:['BAD'],240:['DEATH'],242:['BAD'],250:['TIME'],251:['LOVE'],
- 252:['BEAUTY'],253:['AFF'],254:['BEAUTY'],255:['COURT'],256:['COURT'],257:['COURT'],261:['WORD'],
- 263:['WORD'],264:['WORD'],265:['COURT'],267:['LOVE'],273:['TIME'],275:['TIME'],281:['THINK'],
- 285:['PAIN'],287:['COURT'],288:['BEAUTY'],291:['ANX'],294:['PAIN'],298:['LOVE','BEAUTY'],299:['BEAUTY'],
- 304:['WORD'],309:['TIME'],310:['COURT'],311:['TIME'],312:['TIME'],323:['BAD'],326:['LOVE'],329:['TIME']}
+ 'TASTE':'情趣','TIME':'時・時間','WORD':'ことば・学問','THINK':'思考・評判',
+ 'PLUS':'プラスの評価・心情','MINUS':'マイナスの評価・心情'}
+THEME_ORDER=['LOVE','DEATH','BUD','COURT','TASTE','TIME','WORD','THINK','PLUS','MINUS']
+TH={1:['THINK'],2:['THINK'],3:['BUD'],4:['THINK'],5:['LOVE'],6:['MINUS'],7:['LOVE','THINK'],8:['LOVE'],
+ 11:['PLUS'],12:['PLUS'],13:['PLUS'],14:['PLUS','MINUS'],15:['TASTE','PLUS'],16:['PLUS','COURT'],
+ 17:['MINUS','COURT'],18:['PLUS'],19:['THINK','PLUS'],20:['MINUS'],21:['PLUS'],22:['PLUS'],23:['MINUS'],
+ 24:['MINUS'],25:['MINUS'],26:['TASTE','PLUS'],27:['MINUS'],28:['PLUS','LOVE'],29:['MINUS'],30:['MINUS'],
+ 31:['TIME'],34:['BUD'],35:['WORD'],36:['WORD'],38:['TASTE','LOVE','PLUS'],39:['LOVE','BUD'],45:['TIME'],
+ 51:['PLUS'],52:['LOVE'],54:['TASTE'],55:['PLUS'],60:['THINK'],66:['DEATH','BUD'],69:['DEATH','MINUS'],
+ 70:['MINUS'],72:['DEATH'],73:['BUD'],74:['TASTE','PLUS'],75:['PLUS'],76:['COURT','PLUS'],
+ 77:['PLUS','MINUS'],78:['PLUS'],79:['PLUS'],80:['MINUS'],81:['PLUS'],82:['PLUS'],84:['MINUS'],
+ 85:['MINUS'],86:['PLUS','MINUS'],87:['MINUS'],88:['PLUS'],89:['LOVE','MINUS'],90:['MINUS'],91:['MINUS'],
+ 92:['MINUS'],93:['MINUS'],94:['MINUS'],95:['MINUS'],96:['MINUS'],97:['MINUS'],98:['MINUS'],
+ 99:['COURT','PLUS'],100:['PLUS'],103:['TIME'],104:['MINUS'],105:['LOVE','MINUS'],107:['MINUS'],
+ 108:['COURT'],109:['COURT'],110:['BUD'],113:['BUD'],114:['THINK','LOVE'],115:['DEATH'],117:['TIME'],
+ 118:['TIME'],121:['LOVE'],124:['WORD'],125:['WORD'],127:['TIME'],128:['TIME'],129:['TIME'],145:['TIME'],
+ 147:['THINK'],149:['PLUS'],174:['TASTE'],178:['COURT'],179:['COURT'],180:['COURT'],181:['COURT'],
+ 188:['LOVE'],189:['LOVE'],193:['PLUS'],195:['LOVE','COURT'],197:['DEATH'],198:['MINUS'],199:['MINUS'],
+ 200:['MINUS'],201:['DEATH'],202:['DEATH'],203:['DEATH'],204:['DEATH'],205:['DEATH'],207:['MINUS'],
+ 208:['PLUS'],209:['MINUS'],210:['PLUS'],211:['PLUS','MINUS'],212:['LOVE','TASTE'],213:['PLUS'],
+ 214:['PLUS'],215:['PLUS','MINUS'],216:['PLUS'],217:['PLUS'],218:['PLUS'],219:['PLUS'],220:['MINUS'],
+ 221:['MINUS'],222:['MINUS'],223:['PLUS'],224:['MINUS'],225:['MINUS'],226:['PLUS','MINUS'],
+ 227:['PLUS','MINUS'],228:['MINUS'],229:['MINUS'],230:['MINUS'],231:['TIME','MINUS'],232:['MINUS'],
+ 233:['MINUS'],234:['MINUS'],235:['MINUS'],236:['PLUS'],237:['MINUS'],238:['MINUS'],240:['DEATH'],
+ 241:['MINUS'],242:['MINUS'],243:['MINUS'],244:['PLUS','MINUS'],245:['MINUS'],246:['PLUS'],249:['MINUS'],
+ 250:['TIME'],251:['LOVE'],252:['PLUS'],253:['PLUS'],254:['PLUS'],255:['COURT'],256:['COURT'],
+ 257:['COURT'],259:['TASTE','PLUS'],261:['WORD'],263:['WORD'],264:['WORD'],265:['COURT'],267:['LOVE'],
+ 272:['MINUS'],273:['TIME'],275:['TIME'],280:['MINUS'],281:['THINK'],285:['MINUS'],286:['MINUS'],
+ 287:['COURT'],288:['PLUS'],289:['MINUS'],290:['MINUS'],291:['MINUS'],293:['PLUS','MINUS'],294:['MINUS'],
+ 295:['PLUS'],298:['LOVE','TASTE'],299:['TASTE'],300:['TASTE'],309:['TIME'],310:['COURT'],311:['TIME'],
+ 312:['TIME'],322:['MINUS'],323:['MINUS'],325:['MINUS'],326:['LOVE'],329:['TIME']}
 
-# learning-flag sets
-GAP_BIG={2,15,17,19,21,26,38,66,73,77,82,84,86,93,98,99,105,114,140,147,195,207,208,237}
-GAP_SMALL={1,5,7,8,9,11,12,13,16,18,25,28,55,60,69,74,78,79,87,89,210,212,213,217,222,223,230,298,326}
+# learning-flag sets（docs/TAG_GUIDE.md が定義・判断基準の正）
+GAP_BIG={2,15,17,19,21,26,38,45,59,66,73,77,82,84,86,93,98,99,103,105,114,137,140,147,181,182,183,
+ 195,202,203,205,207,208,237,240,314}
+GAP_SMALL={1,5,7,8,9,11,12,13,16,18,25,28,55,58,60,69,74,78,79,87,89,119,141,190,204,210,212,213,217,
+ 222,223,230,258,260,271,274,283,295,298,301,305,326}
 CORE={1,4,5,7,10,14,15,20,26,37,38,40,60,64,67,77,78,85,120,233}
-POLAR={14,77,87,140}
+VAGUE={10,15,26,37,40,64,67,106,120,122,233,260,268,300,302,303}  # 漠然系：意味の輪郭がぼやける語（TAG_GUIDE §3-(1)(2)）
 KANGO={3,65,179,180,191,193,197}
-KEIGO_CARE={153,164,167,169}
+KEIGO_CARE={153,156,159,160,164,165,166,167,169}
+KOOU_EXTRA={50,143,144,318}  # 「～」を含まないが呼応の副詞に該当する語
 
 # ---------- authoritative meanings (意味一覧シート) ----------
 # 各語の意味・意味数は data/古文単語_意味付き.xlsx の「意味一覧」シートを正とする。
@@ -277,21 +290,23 @@ for no in rel:
 
 # ---------- finalize words ----------
 FL={'GAPB':'現代語とギャップ大','GAPS':'現代語と少しズレ','POLY':'多義語','CORE':'コアで覚える',
-    'POLAR':'プラス/マイナス両義','KOOU':'呼応の副詞','NASHI':'「〜なし」型','KANGO':'漢語サ変','KEIGOCARE':'敬語要注意'}
-FLAG_ORDER=['GAPB','GAPS','POLY','CORE','POLAR','KOOU','NASHI','KANGO','KEIGOCARE']
+    'VAGUE':'漠然系','POLAR':'プラス/マイナス両義','KOOU':'呼応の副詞','NASHI':'「〜なし」型',
+    'KANGO':'漢語サ変','KEIGOCARE':'敬語要注意'}
+FLAG_ORDER=['GAPB','GAPS','POLY','CORE','VAGUE','POLAR','KOOU','NASHI','KANGO','KEIGOCARE']
 words=[]
 for w in base:
-    no=w['no']; flags=[]
+    no=w['no']; flags=[]; codes=TH.get(no,[])
     if no in GAP_BIG: flags.append(FL['GAPB'])
     elif no in GAP_SMALL: flags.append(FL['GAPS'])
     if len(w['meanings'])>=4: flags.append(FL['POLY'])
     if no in CORE: flags.append(FL['CORE'])
-    if no in POLAR: flags.append(FL['POLAR'])
-    if '～' in w['word']: flags.append(FL['KOOU'])
+    if no in VAGUE: flags.append(FL['VAGUE'])
+    if 'PLUS' in codes and 'MINUS' in codes: flags.append(FL['POLAR'])  # 両テーマ保有から自動導出（TAG_GUIDE §3-(3)）
+    if '～' in w['word'] or no in KOOU_EXTRA: flags.append(FL['KOOU'])
     if w['pos']=='形容詞' and w['word'].endswith('なし'): flags.append(FL['NASHI'])
     if no in KANGO: flags.append(FL['KANGO'])
     if no in KEIGO_CARE: flags.append(FL['KEIGOCARE'])
-    w['themes']=[TL[c] for c in TH.get(no,[])]
+    w['themes']=[TL[c] for c in codes]
     w['flags']=flags
     w['related']=rel[no]
     words.append(w)
