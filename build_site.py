@@ -658,25 +658,30 @@ function meansList(w,cls){
   if(w.meanings.length<=1)return `<div class="means one ${cls||''}">${esc(w.meanings[0]||'')}</div>`;
   return `<ol class="means ${cls||''}">${w.meanings.map(m=>`<li>${esc(m)}</li>`).join('')}</ol>`;}
 function midx(w,imi){const i=w.meanings.indexOf(imi);return i>=0?i+1:0;}
-/* ---- 四択：誤答肢の自動生成 ----
-   優先度＝混同語 > 対義語 > 同テーマ・同品詞 > 同品詞 > 全語。
+/* ---- 四択：誤答肢の自動生成（紛らわしさスコア方式） ----
+   全語の全語義を候補にし、「正解と見分けにくい」ほど高得点：
+   同品詞+5（文体が揃い形で消去できない）／混同+7・対義+5・類義+3（類義は重複しない別語義のみ通る）／
+   共有テーマ×2（プラス・マイナスの一致を含む＝文脈の正負で消去できない）／
+   正解と文字数が近いほど加点（「長い選択肢が正解」の癖を防ぐ）／わずかな乱数で毎回変える。
    自語の意味と語義片（・区切り）が重なる候補は除外（正解が複数になるのを防ぐ） */
 function mcFrags(s){return (s||'').replace(/[（(][^（）()]*[）)]/g,'').split(/[・／\/]/).filter(x=>x);}
 function mcConflict(a,b){const A=new Set(mcFrags(a));return mcFrags(b).some(f=>A.has(f));}
 function mcBuild(w,correct){
   const chosen=[correct];
   const bad=c=>!c||chosen.some(x=>x===c||mcConflict(x,c))||w.meanings.some(m=>mcConflict(m,c));
-  const nos=[];
-  (w.related||[]).forEach(r=>{if(r.type==='混同')nos.push(r.no);});
-  (w.related||[]).forEach(r=>{if(r.type==='対義')nos.push(r.no);});
   const th=new Set(w.themes);
-  nos.push(...shuffle(DB.words.filter(x=>x.no!==w.no&&x.pos===w.pos&&x.themes.some(t=>th.has(t))).map(x=>x.no)));
-  nos.push(...shuffle(DB.words.filter(x=>x.no!==w.no&&x.pos===w.pos).map(x=>x.no)));
-  nos.push(...shuffle(DB.words.filter(x=>x.no!==w.no).map(x=>x.no)));
-  for(const no of nos){if(chosen.length>=4)break;
-    const cw=DB.words.find(x=>x.no===no);
-    const c=cw.meanings[Math.random()*cw.meanings.length|0];
-    if(!bad(c))chosen.push(c);}
+  const rel={};(w.related||[]).forEach(r=>{rel[r.no]=r.type;});
+  const cands=[];
+  DB.words.forEach(x=>{
+    if(x.no===w.no)return;
+    let s=0;
+    if(rel[x.no]==='混同')s+=7;else if(rel[x.no]==='対義')s+=5;else if(rel[x.no]==='類義')s+=3;
+    x.themes.forEach(t=>{if(th.has(t))s+=2;});
+    if(x.pos===w.pos)s+=5;
+    x.meanings.forEach(c=>{cands.push({c,s:s-Math.abs(c.length-correct.length)*0.25+Math.random()*1.5});});
+  });
+  cands.sort((a,b)=>b.s-a.s);
+  for(const k of cands){if(chosen.length>=4)break;if(!bad(k.c))chosen.push(k.c);}
   return shuffle(chosen.map((t,i)=>({t,ok:i===0})));}
 function mcAnswer(btn){const w=cur.w,e=cur.e;
   if($('#qbody').dataset.done)return;$('#qbody').dataset.done='1';

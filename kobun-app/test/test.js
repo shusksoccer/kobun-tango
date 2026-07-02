@@ -151,6 +151,13 @@ const ok = (name, cond) => { (cond ? pass++ : fail++); console.log((cond ? 'PASS
   ok('quiz mc: 覚えた records known and clears weak',
      !JSON.parse(w.localStorage.getItem('koten_weak') || '[]').includes(1) &&
      Object.keys(JSON.parse(w.localStorage.getItem('koten_known_at') || '{}')).some(k => /^1:/.test(k)));
+  // distractor difficulty: for 24 うし (形容詞・マイナス) distractors come from same-pos words
+  w.eval("idx=deck.findIndex(x=>x.no===24);show();");
+  const dist24 = [...doc.querySelectorAll('.mcbtn')].filter(b => b.dataset.ok !== '1')
+    .map(b => b.textContent.slice(1));
+  const posCount = dist24.filter(t =>
+    w.eval(`(DB.words.find(x=>x.no!==24&&x.meanings.includes(${JSON.stringify(t)}))||{}).pos`) === '形容詞').length;
+  ok('quiz mc: distractors match part of speech (≥2 of 3 adjectives for うし)', posCount >= 2);
 }
 
 // ---- PWA artifacts ----
