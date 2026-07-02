@@ -114,6 +114,7 @@ select,.minibtn{font-family:inherit;font-size:14px;color:var(--ink);background:v
 .imp{font-size:11.5px;font-weight:700;letter-spacing:.04em;margin-left:auto}
 .metaline{display:flex;flex-wrap:wrap;gap:6px;margin-top:7px;align-items:center}
 .pos{font-size:11.5px;font-weight:700;color:#fff;background:#7a7264;border-radius:6px;padding:3px 8px}
+.kat{font-size:11.5px;font-weight:700;color:#6c655a;border:1px solid #b8b0a0;border-radius:6px;padding:2px 7px}
 .kg{font-size:11.5px;font-weight:700;color:#fff;background:var(--c,#666);border-radius:6px;padding:3px 8px}
 .tag{font-size:12px;border-radius:999px;padding:6px 12px;cursor:pointer;border:1px solid var(--c,var(--rule));
   color:var(--c,var(--ink2));background:transparent;line-height:1.3}
@@ -181,6 +182,27 @@ select,.minibtn{font-family:inherit;font-size:14px;color:var(--ink);background:v
 .modebtn b{font-size:15px}.modebtn span{display:block;color:var(--ink2);font-size:12px;margin-top:3px}
 .reviewbox{border:1px dashed var(--seiji);border-radius:12px;background:#eef3ee;padding:11px 13px}
 .reviewinfo{font-size:13.5px;color:var(--ink2);font-weight:600}
+/* 四択 */
+.mcgrid{display:grid;gap:9px;margin-top:14px;text-align:left;max-width:560px;margin-left:auto;margin-right:auto}
+.mcbtn{font-family:inherit;font-size:15.5px;line-height:1.5;text-align:left;padding:12px 14px;min-height:48px;
+  border:1px solid var(--rule);border-radius:12px;background:#fff8;cursor:pointer;color:var(--ink);
+  display:flex;align-items:center;gap:10px}
+.mcbtn .mck{flex:none;width:24px;height:24px;border-radius:50%;background:#e7e2d4;color:var(--hanada-d);
+  font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center}
+.mcbtn.ok{border-color:var(--seiji);background:#e6efe6;box-shadow:inset 0 0 0 1px var(--seiji)}
+.mcbtn.ok .mck{background:var(--seiji);color:#fff}
+.mcbtn.ng{border-color:#8c414c;background:#f4e7e7}
+.mcbtn.ng .mck{background:#8c414c;color:#fff}
+.mcbtn:disabled{cursor:default;opacity:.92}
+/* 学習レポート */
+.rep{display:flex;align-items:center;gap:8px;margin:5px 0}
+.replabel{flex:0 0 10.5em;font-size:12.5px;color:var(--ink2)}
+.repbar{flex:1;height:10px;background:#e7e2d4;border-radius:99px;overflow:hidden}
+.repbar i{display:block;height:100%;border-radius:99px}
+.repnum{flex:0 0 3.8em;text-align:right;font-size:12px;color:var(--ink2);font-variant-numeric:tabular-nums}
+.repline{font-size:15.5px;margin-bottom:4px}
+#repBody h4{margin:16px 0 7px;font-size:12.5px;letter-spacing:.08em;color:var(--kikyo)}
+.repweak{display:flex;flex-wrap:wrap;gap:7px}
 .bignum{font-family:'Shippori Mincho B1',serif;font-size:30px;color:var(--hanada-d);line-height:1}
 .start{font-family:inherit;font-size:17px;font-weight:700;background:var(--hanada);color:#fff;border:0;border-radius:12px;
   padding:15px 30px;cursor:pointer;box-shadow:var(--shadow);width:100%;max-width:360px}
@@ -246,10 +268,14 @@ select,.minibtn{font-family:inherit;font-size:14px;color:var(--ink);background:v
 
 HEAD = """<!doctype html><html lang="ja"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>%TITLE%</title>
+<meta name="theme-color" content="#2f5670">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@500;600;700&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap" rel="stylesheet">
 <style>%CSS%</style></head><body>
 <script>const DB=%DATA%;</script>
+<script>if('serviceWorker' in navigator&&location.protocol.indexOf('http')===0)addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));</script>
 """
 
 COLORS = r"""
@@ -292,6 +318,25 @@ const DUE_MS=30*24*3600*1000;
 function senseDue(key){return known.has(key)&&(Date.now()-(knownAt[key]||0))>DUE_MS;}
 function wordDue(w){for(let i=1;i<=totalSenses(w);i++)if(senseDue(sk(w.no,i)))return true;return false;}
 function reviewWords(){return DB.words.filter(w=>weakSet.has(w.no)||wordDue(w));}
+/* 出典→成立時代（例文の出典表示に併記）。「源氏物語・松風」のような枝番は本体名で引く */
+const SRC_ERA={'万葉集':'奈良','古事記':'奈良',
+ '竹取物語':'平安前期','伊勢物語':'平安前期','古今和歌集':'平安前期','土佐日記':'平安前期',
+ '後撰和歌集':'平安中期','平中物語':'平安中期','大和物語':'平安中期','蜻蛉日記':'平安中期',
+ 'うつほ物語':'平安中期','宇津保物語':'平安中期','落窪物語':'平安中期','枕草子':'平安中期',
+ '源氏物語':'平安中期','和泉式部日記':'平安中期','紫式部日記':'平安中期','拾遺和歌集':'平安中期',
+ '更級日記':'平安中期',
+ '後拾遺和歌集':'平安後期','堤中納言物語':'平安後期','夜の寝覚':'平安後期','浜松中納言物語':'平安後期',
+ '栄花物語':'平安後期','大鏡':'平安後期','今昔物語集':'平安後期','讃岐典侍日記':'平安後期',
+ '詞花和歌集':'平安後期','梁塵秘抄':'平安末期','千載和歌集':'平安末期','今鏡':'平安末期',
+ '住吉物語':'鎌倉前期','新古今和歌集':'鎌倉前期','方丈記':'鎌倉前期','無名抄':'鎌倉前期',
+ '建礼門院右京大夫集':'鎌倉前期','平家物語':'鎌倉前期','平治物語':'鎌倉前期','宇治拾遺物語':'鎌倉前期',
+ '古本説話集':'鎌倉前期','今物語':'鎌倉前期','十訓抄':'鎌倉中期','古今著聞集':'鎌倉中期',
+ '十六夜日記':'鎌倉後期','沙石集':'鎌倉後期','玉葉和歌集':'鎌倉後期','徒然草':'鎌倉末期',
+ '増鏡':'南北朝','太平記':'南北朝','義経記':'室町','閑吟集':'室町','文正草子':'室町',
+ '唐糸草子':'室町','二十四孝':'室町','伊曾保物語':'江戸前期','野ざらし紀行':'江戸前期',
+ '奥の細道':'江戸前期','折たく柴の記':'江戸中期','春雨物語':'江戸後期'};
+function srcEra(s){if(!s)return'';return SRC_ERA[s]||SRC_ERA[s.split('・')[0]]||'';}
+function srcLine(s){if(!s)return'—';const e=srcEra(s);return esc(s)+(e?'（'+e+'）':'');}
 /* 検索用の仮名正規化：カタカナ→ひらがな、歴史的仮名（ゐゑを・ぢづ）を現代仮名に寄せる */
 function normQ(s){return (s||'').toLowerCase()
   .replace(/[ァ-ヶ]/g,c=>String.fromCharCode(c.charCodeAt(0)-0x60))
@@ -333,6 +378,7 @@ INDEX_BODY = r"""
       <button class="minibtn" id="tf">絞り込み</button>
       <select id="sort"><option value="no">番号順</option><option value="kana">五十音順</option><option value="pos">品詞順</option></select>
       <select id="view"><option value="all">すべて</option><option value="unknown">未習のみ</option><option value="known">既習のみ</option></select>
+      <button class="minibtn" id="report">レポート</button>
       <span class="count" id="count"></span>
     </div>
   </div>
@@ -345,6 +391,11 @@ INDEX_BODY = r"""
   <div class="modal-title" id="noteTitle"></div>
   <div class="modal-sub" id="noteSub"></div>
   <div class="modal-body" id="noteBody"></div>
+</div></div>
+<div class="modal" id="repModal" hidden><div class="modal-card" role="dialog" aria-modal="true">
+  <button class="modal-x" id="repClose" aria-label="閉じる">×</button>
+  <div class="modal-eyebrow">学習レポート</div>
+  <div class="modal-body" id="repBody"></div>
 </div></div>
 <script>
 %COLORS%
@@ -399,7 +450,8 @@ function relInner(w){
   return h;}
 function card(w){
   const kc=knownCount(w),tot=totalSenses(w),full=kc===tot;
-  const meta=`<span class="pos">${esc(w.pos)}</span>`+w.keigo.map(k=>`<span class="kg" style="--c:${KEIGO_C[k]}">${esc(k)}</span>`).join('')
+  const meta=`<span class="pos">${esc(w.pos)}</span>`+(w.kat?`<span class="kat">${esc(w.kat)}</span>`:'')
+    +w.keigo.map(k=>`<span class="kg" style="--c:${KEIGO_C[k]}">${esc(k)}</span>`).join('')
     +w.themes.map(t=>`<button class="tag th" data-f="theme" data-v="${esc(t)}" style="--c:${THEME_C[t]}">${esc(t)}</button>`).join('')
     +w.flags.map(t=>`<button class="tag flag" data-f="flag" data-v="${esc(t)}" style="--c:${FLAG_C[t]}">${esc(t)}</button>`).join('');
   const means=senseChecklist(w,0);
@@ -407,7 +459,7 @@ function card(w){
   const ex=w.examples.map(e=>`<div class="ex">
     <div class="ko mincho">${koRed(e.koU)}</div>
     <div class="yk">${ykMask(e.ykBlank,e.imi)}</div>
-    <div class="src">出典：${esc(e.src||'—')}</div></div>`).join('');
+    <div class="src">出典：${srcLine(e.src)}</div></div>`).join('');
   return `<article class="card${full?' learned':''}" id="w${w.no}" style="--impc:${IMP_C[w.imp]}">
     <div class="ctop">
       <button class="known${kc&&!full?' partial':''}" data-no="${w.no}" aria-pressed="${full}" aria-label="すべての意味を覚えた" title="全${tot}中 ${kc} 覚えた">${full?'✓':(kc||'')}</button>
@@ -469,6 +521,7 @@ function openNote(no){const w=DB.words.find(x=>x.no===no);if(!w)return;
   $('#noteTitle').innerHTML=`<span class="mincho">${esc(w.word)}</span>${w.kanji?`<span class="ktitle">〔${esc(w.kanji)}〕</span>`:''}`;
   $('#noteSub').innerHTML=`<span class="badge" style="background:${IMP_C[w.imp]}">${esc(w.imp)}</span>`
     +`<span class="badge" style="background:#7a7264">${esc(w.pos)}</span>`
+    +(w.kat?`<span class="badge" style="background:#8a8276">${esc(w.kat)}</span>`:'')
     +w.keigo.map(k=>`<span class="badge" style="background:${KEIGO_C[k]}">${esc(k)}</span>`).join('')
     +`<span>${w.meanings.map(esc).join(' / ')}</span>`;
   $('#noteBody').textContent=w.note||'';
@@ -476,7 +529,33 @@ function openNote(no){const w=DB.words.find(x=>x.no===no);if(!w)return;
 function closeNote(){$('#noteModal').hidden=true;document.body.style.overflow='';}
 $('#noteClose').onclick=closeNote;
 $('#noteModal').onclick=e=>{if(e.target.id==='noteModal')closeNote();};
-document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('#noteModal').hidden)closeNote();});
+/* 学習レポート：重要度帯・テーマ別の既習率と弱点・復習期限切れの一覧 */
+function repBar(label,k,n,color){const p=n?Math.round(k/n*100):0;
+  return `<div class="rep"><span class="replabel">${esc(label)}</span><span class="repbar"><i style="width:${p}%;background:${color||'#7a7264'}"></i></span><span class="repnum">${k}/${n}</span></div>`;}
+function openReport(){
+  const senseTot=DB.words.reduce((a,w)=>a+totalSenses(w),0);
+  let h=`<div class="repline">既習：<b>${masteredCount()}</b> / ${DB.words.length} 語（意味単位 <b>${known.size}</b> / ${senseTot}）</div>`;
+  h+='<h4>重要度別（全意味を覚えた語）</h4>';
+  DB.meta.imp.forEach(b=>{const ws=DB.words.filter(w=>w.imp===b);if(!ws.length)return;
+    h+=repBar(b,ws.filter(wordFull).length,ws.length,IMP_C[b]);});
+  h+='<h4>テーマ別（全意味を覚えた語）</h4>';
+  DB.meta.theme.forEach(t=>{const ws=DB.words.filter(w=>w.themes.includes(t));if(!ws.length)return;
+    h+=repBar(t,ws.filter(wordFull).length,ws.length,THEME_C[t]);});
+  const wk=[...weakSet].map(no=>DB.words.find(w=>w.no===no)).filter(Boolean).sort((a,b)=>a.no-b.no);
+  h+=`<h4>あいまい（弱点）：${wk.length}語</h4>`;
+  h+=wk.length?`<div class="repweak">${wk.map(w=>`<button class="relw" data-no="${w.no}">${esc(w.word)}</button>`).join('')}</div>`:'<p class="help">なし。テストで「あいまい」にした語がここに並びます。</p>';
+  const due=DB.words.filter(wordDue);
+  h+=`<h4>復習期限切れ（チェックから30日）：${due.length}語</h4>`;
+  h+=due.length?`<div class="repweak">${due.map(w=>`<button class="relw" data-no="${w.no}">${esc(w.word)}</button>`).join('')}</div>`:'<p class="help">なし。</p>';
+  $('#repBody').innerHTML=h;
+  $('#repBody').querySelectorAll('.relw').forEach(b=>b.onclick=()=>{closeReport();relJump(+b.dataset.no);});
+  const m=$('#repModal');m.hidden=false;m.querySelector('.modal-card').scrollTop=0;document.body.style.overflow='hidden';}
+function closeReport(){$('#repModal').hidden=true;document.body.style.overflow='';}
+$('#report').onclick=openReport;
+$('#repClose').onclick=closeReport;
+$('#repModal').onclick=e=>{if(e.target.id==='repModal')closeReport();};
+document.addEventListener('keydown',e=>{if(e.key!=='Escape')return;
+  if(!$('#noteModal').hidden)closeNote();if(!$('#repModal').hidden)closeReport();});
 buildFilters();render();window.addEventListener('hashchange',render);
 </script>
 """
@@ -492,6 +571,7 @@ QUIZ_BODY = r"""
     <div class="field"><h4>出題の向き</h4><div class="modebtns" id="modebtns">
       <button class="modebtn on" data-m="fwd"><b>単語 → 意味</b><span>古語と例文を見て意味を答える</span></button>
       <button class="modebtn" data-m="rev"><b>意味 → 単語（逆引き）</b><span>現代語訳を見て古語を答える</span></button>
+      <button class="modebtn" data-m="mc"><b>四択テスト</b><span>正しい意味を四つの選択肢から選ぶ</span></button>
     </div></div>
     <div class="field"><h4>重要度（未選択ですべて）</h4><div class="chips" id="fImp"></div></div>
     <div class="field"><h4>品詞（任意）</h4><div class="chips" id="fPos"></div></div>
@@ -578,18 +658,67 @@ function meansList(w,cls){
   if(w.meanings.length<=1)return `<div class="means one ${cls||''}">${esc(w.meanings[0]||'')}</div>`;
   return `<ol class="means ${cls||''}">${w.meanings.map(m=>`<li>${esc(m)}</li>`).join('')}</ol>`;}
 function midx(w,imi){const i=w.meanings.indexOf(imi);return i>=0?i+1:0;}
+/* ---- 四択：誤答肢の自動生成 ----
+   優先度＝混同語 > 対義語 > 同テーマ・同品詞 > 同品詞 > 全語。
+   自語の意味と語義片（・区切り）が重なる候補は除外（正解が複数になるのを防ぐ） */
+function mcFrags(s){return (s||'').replace(/[（(][^（）()]*[）)]/g,'').split(/[・／\/]/).filter(x=>x);}
+function mcConflict(a,b){const A=new Set(mcFrags(a));return mcFrags(b).some(f=>A.has(f));}
+function mcBuild(w,correct){
+  const chosen=[correct];
+  const bad=c=>!c||chosen.some(x=>x===c||mcConflict(x,c))||w.meanings.some(m=>mcConflict(m,c));
+  const nos=[];
+  (w.related||[]).forEach(r=>{if(r.type==='混同')nos.push(r.no);});
+  (w.related||[]).forEach(r=>{if(r.type==='対義')nos.push(r.no);});
+  const th=new Set(w.themes);
+  nos.push(...shuffle(DB.words.filter(x=>x.no!==w.no&&x.pos===w.pos&&x.themes.some(t=>th.has(t))).map(x=>x.no)));
+  nos.push(...shuffle(DB.words.filter(x=>x.no!==w.no&&x.pos===w.pos).map(x=>x.no)));
+  nos.push(...shuffle(DB.words.filter(x=>x.no!==w.no).map(x=>x.no)));
+  for(const no of nos){if(chosen.length>=4)break;
+    const cw=DB.words.find(x=>x.no===no);
+    const c=cw.meanings[Math.random()*cw.meanings.length|0];
+    if(!bad(c))chosen.push(c);}
+  return shuffle(chosen.map((t,i)=>({t,ok:i===0})));}
+function mcAnswer(btn){const w=cur.w,e=cur.e;
+  if($('#qbody').dataset.done)return;$('#qbody').dataset.done='1';
+  const hit=btn.dataset.ok==='1';
+  $('#qbody').querySelectorAll('.mcbtn').forEach(b=>{
+    if(b.dataset.ok==='1')b.classList.add('ok');else if(b===btn)b.classList.add('ng');
+    b.disabled=true;});
+  if(hit){const i=e.mi||(w.meanings.length<=1?1:0);
+    if(i)addKnown(sk(w.no,i));else for(let k=1;k<=totalSenses(w);k++)addKnown(sk(w.no,k));
+    saveKnown();weakSet.delete(w.no);saveWeak();knownRun++;$('#kn').textContent=`覚えた ${knownRun}`;}
+  else{weak.push(w);weakSet.add(w.no);saveWeak();}
+  $('#reveal').innerHTML=`<div class="qkolabel">意味（覚えたらチェック）</div>`+senseChecklist(w,e.mi||0)
+    +`<div class="tr">訳：${esc((e.yk||'').replace(BLK,e.imi))}</div>`
+    +`<a class="jump" href="index.html#w${w.no}">辞典で詳しく確認 →</a>`;
+  $('#reveal').classList.add('show');bindSenseChecks($('#reveal'));
+  $('#btns').innerHTML='<button class="qb show" id="nextBtn">次へ</button>';
+  $('#nextBtn').onclick=next;}
 function allCloze(w){return w.examples.map(e=>{const n=midx(w,e.imi);
   return `<div class="qex"><span class="qexn">${n||'・'}</span><span class="qexko mincho">${blankify(e.koBlank)}${e.src?`<span class="qexsrc">（${esc(e.src)}）</span>`:''}</span></div>`;}).join('');}
 function show(){const w=deck[idx];cur.w=w;const e=w.examples[Math.random()*w.examples.length|0];cur.e=e;
   $('#pos').textContent=`${idx+1} / ${deck.length}`;$('#kn').textContent=`覚えた ${knownRun}`;
   $('#bar').style.width=(idx/deck.length*100)+'%';
-  $('#qbadge').innerHTML=badge(w.imp,IMP_C[w.imp],'imp2')+badge(w.pos,'#7a7264','pos')+w.keigo.map(k=>badge(k,KEIGO_C[k],'kg')).join('');
+  $('#qbadge').innerHTML=badge(w.imp,IMP_C[w.imp],'imp2')+badge(w.pos,'#7a7264','pos')
+    +(w.kat?badge(w.kat,'#8a8276','pos'):'')+w.keigo.map(k=>badge(k,KEIGO_C[k],'kg')).join('');
   $('#reveal').classList.remove('show');$('#reveal').innerHTML='';
+  if(mode==='mc'){
+    delete $('#qbody').dataset.done;
+    $('#qhead').innerHTML=`<div class="qword mincho">${esc(w.word)}</div>`;
+    $('#qprompt').textContent='この語の意味は？（四択）';
+    const correct=(e.mi&&w.meanings[e.mi-1])||w.meanings[0];
+    const ch=mcBuild(w,correct);
+    $('#qbody').innerHTML=`<div class="qkolabel">例文（古文）</div><div class="qko mincho">${koUnder(e.koU)}</div>`
+      +`${e.src?`<div class="qsrc">出典：${srcLine(e.src)}</div>`:''}`
+      +`<div class="mcgrid">`+ch.map((c,i)=>`<button class="mcbtn" data-ok="${c.ok?1:0}"><span class="mck">${'アイウエ'[i]}</span>${esc(c.t)}</button>`).join('')+`</div>`;
+    $('#qbody').querySelectorAll('.mcbtn').forEach(b=>b.onclick=()=>mcAnswer(b));
+    $('#btns').innerHTML='';
+    return;}
   if(mode==='fwd'){
     $('#qhead').innerHTML=`<div class="qword mincho">${esc(w.word)}</div>`;
     $('#qprompt').textContent='この語の意味は？';
     $('#qbody').innerHTML=`<div class="qkolabel">例文（古文）</div><div class="qko mincho">${koUnder(e.koU)}</div>`
-      +`${e.src?`<div class="qsrc">出典：${esc(e.src)}</div>`:''}`
+      +`${e.src?`<div class="qsrc">出典：${srcLine(e.src)}</div>`:''}`
       +`<button class="hintbtn" id="hintBtn">ヒント（訳）を見る ▾</button>`
       +`<div class="qhintlabel" id="qhintlabel" style="display:none">訳（同じ箇所が空欄）</div>`
       +`<div class="qhint" id="qhint" style="display:none">${blankify(e.ykBlank)}</div>`;
@@ -639,5 +768,39 @@ def build(title,body):
     return HEAD.replace('%TITLE%',title).replace('%CSS%',CSS).replace('%DATA%',DATA)+body.replace('%COLORS%',COLORS)+"</body></html>"
 open(os.path.join(ROOT,'dist','index.html'),'w',encoding='utf-8').write(build('古文単語帳｜辞典',INDEX_BODY))
 open(os.path.join(ROOT,'dist','quiz.html'),'w',encoding='utf-8').write(build('古文単語帳｜暗記テスト',QUIZ_BODY))
-import os
+
+# ---------- PWA（manifest / Service Worker / アイコン） ----------
+import time, shutil, json as _json
+MANIFEST={"name":"古文単語帳","short_name":"古文単語","start_url":"./","scope":"./",
+ "display":"standalone","background_color":"#e4e0d3","theme_color":"#2f5670",
+ "icons":[{"src":"icon-192.png","sizes":"192x192","type":"image/png"},
+          {"src":"icon-512.png","sizes":"512x512","type":"image/png"},
+          {"src":"icon-512.png","sizes":"512x512","type":"image/png","purpose":"maskable"}]}
+open(os.path.join(ROOT,'dist','manifest.webmanifest'),'w',encoding='utf-8').write(_json.dumps(MANIFEST,ensure_ascii=False))
+# SW: ナビゲーションはネット優先（更新を取り込み、オフライン時はキャッシュ）。
+# フォント（Google Fonts）と同一オリジンの静的物はキャッシュ優先＋裏で更新。
+SW = r"""const V='koten-%STAMP%';
+const CORE=['./','./quiz','./manifest.webmanifest','./icon-192.png','./icon-512.png','./apple-touch-icon.png'];
+self.addEventListener('install',e=>{e.waitUntil(caches.open(V).then(c=>c.addAll(CORE)).then(()=>self.skipWaiting()))});
+self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k!==V&&k!=='koten-rt').map(k=>caches.delete(k)))).then(()=>self.clients.claim()))});
+self.addEventListener('fetch',e=>{const req=e.request;if(req.method!=='GET')return;
+  const u=new URL(req.url);
+  if(req.mode==='navigate'){
+    e.respondWith(fetch(req).then(r=>{const cp=r.clone();caches.open(V).then(c=>c.put(req,cp));return r;})
+      .catch(()=>caches.match(req).then(r=>r||caches.match(u.pathname.indexOf('quiz')>=0?'./quiz':'./'))));
+    return;}
+  if(u.origin===location.origin||u.hostname==='fonts.googleapis.com'||u.hostname==='fonts.gstatic.com'){
+    e.respondWith(caches.open('koten-rt').then(c=>c.match(req).then(hit=>{
+      const net=fetch(req).then(r=>{if(r&&r.ok)c.put(req,r.clone());return r;}).catch(()=>hit);
+      return hit||net;})));}
+});
+""".replace('%STAMP%',time.strftime('%Y%m%d%H%M%S'))
+open(os.path.join(ROOT,'dist','sw.js'),'w',encoding='utf-8').write(SW)
+ASSETS=os.path.join(ROOT,'assets')
+if os.path.isdir(ASSETS):
+    for fn in ['icon-192.png','icon-512.png','apple-touch-icon.png']:
+        p=os.path.join(ASSETS,fn)
+        if os.path.exists(p): shutil.copy2(p,os.path.join(ROOT,'dist',fn))
+
 for fn in ['index.html','quiz.html']:print(fn,os.path.getsize(os.path.join(ROOT,'dist',fn))//1024,'KB')
+print('pwa:',sorted(f for f in os.listdir(os.path.join(ROOT,'dist')) if not f.endswith('.html')))

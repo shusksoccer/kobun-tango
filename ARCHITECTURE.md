@@ -24,7 +24,7 @@ data/explanations.md ───────┘                                   
 
 ## build_site.py の責務
 
-- `data_payload.json` を読み、HTMLを2枚生成。
+- `data_payload.json` を読み、HTMLを2枚生成。あわせて PWA 一式（`manifest.webmanifest`・`sw.js`・アイコン類を `assets/` からコピー）を `dist/` に出力。SWはナビゲーション＝ネット優先（オフライン時キャッシュ）、フォント・静的物＝キャッシュ優先＋裏で更新。キャッシュ名はビルド時刻で版管理。
 - 共通部品: `HEAD`（フォント・`<style>`・データ埋め込み `const DB=...`）、`COLORS`（色マップ＋ `esc`/`blankify`/`koUnder` 等のJSヘルパ）、`CSS`。
 - `INDEX_BODY`（辞典）/`QUIZ_BODY`（テスト）に各ページのDOMとロジック。
 - `build(title, body)` が `HEAD + body` を連結。**`%TITLE%`/`%CSS%`/`%DATA%`/`%COLORS%` を `.replace()` で差し込む**（f-string不使用：JSの波括弧と衝突するため）。

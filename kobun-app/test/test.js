@@ -59,6 +59,20 @@ const ok = (name, cond) => { (cond ? pass++ : fail++); console.log((cond ? 'PASS
   ok('index: search normalizes historical kana (おかし → をかし)',
      !!doc.querySelector('#w15') && !doc.querySelector('#w1'));
   d.window.eval("state.q='';render()");
+  // conjugation badge and source era
+  ok('index: conjugation badge (w1 おどろく = カ行四段)',
+     (doc.querySelector('#w1 .kat') || {}).textContent === 'カ行四段');
+  ok('index: adjective conjugation (w15 をかし = シク活用)',
+     (doc.querySelector('#w15 .kat') || {}).textContent === 'シク活用');
+  ok('index: source shows era (源氏物語（平安中期）)',
+     [...doc.querySelectorAll('#w1 .src')].some(s => s.textContent.includes('源氏物語（平安中期）')));
+  // report modal
+  doc.querySelector('#report').click();
+  ok('index: report modal opens with band/theme bars',
+     !doc.querySelector('#repModal').hidden &&
+     doc.querySelectorAll('#repBody .rep').length >= 10 &&
+     /330/.test(doc.querySelector('#repBody .repline').textContent));
+  d.window.eval('closeReport()');
   // legacy word-level data (a bare number) migrates to all senses of that word
   const dm = new JSDOM(fs.readFileSync(path.join(DIST, 'index.html'), 'utf8'),
     { runScripts: 'dangerously', pretendToBeVisual: true, url: 'https://kobun.test/index.html',
@@ -102,6 +116,44 @@ const ok = (name, cond) => { (cond ? pass++ : fail++); console.log((cond ? 'PASS
   ok('quiz: 覚えた removes from koten_weak and records date',
      !JSON.parse(w.localStorage.getItem('koten_weak') || '[]').includes(2) &&
      Object.keys(JSON.parse(w.localStorage.getItem('koten_known_at') || '{}')).some(k => /^2:/.test(k)));
+}
+
+// ---- quiz multiple choice (四択) ----
+{
+  const q = run('quiz.html'), w = q.window, doc = w.document;
+  w.eval("localStorage.clear();known.clear();weakSet.clear();mode='mc';$('#num').value='0';$('#order').value='no';start(pool());idx=deck.findIndex(x=>x.no===1);show();");
+  const btns = [...doc.querySelectorAll('.mcbtn')];
+  const w1meanings = w.eval('DB.words.find(x=>x.no===1).meanings');
+  ok('quiz mc: 4 choices with exactly one correct',
+     btns.length === 4 && btns.filter(b => b.dataset.ok === '1').length === 1);
+  const okBtn = btns.find(b => b.dataset.ok === '1');
+  ok('quiz mc: correct choice text is one of the word\'s meanings',
+     w1meanings.some(m => okBtn.textContent.includes(m)));
+  ok('quiz mc: distractors do not duplicate own meanings',
+     btns.filter(b => b.dataset.ok !== '1').every(b => !w1meanings.some(m => b.textContent.includes(m))));
+  // wrong answer → weak persisted, next button appears
+  btns.find(b => b.dataset.ok !== '1').click();
+  ok('quiz mc: wrong answer marks weak and reveals answer',
+     JSON.parse(w.localStorage.getItem('koten_weak') || '[]').includes(1) &&
+     !!doc.querySelector('#nextBtn') && !!doc.querySelector('#reveal .mlist'));
+  // correct answer → known recorded, weak cleared
+  w.eval("idx=deck.findIndex(x=>x.no===1);show();");
+  doc.querySelector('.mcbtn[data-ok="1"]').click();
+  ok('quiz mc: correct answer records known and clears weak',
+     !JSON.parse(w.localStorage.getItem('koten_weak') || '[]').includes(1) &&
+     Object.keys(JSON.parse(w.localStorage.getItem('koten_known_at') || '{}')).some(k => /^1:/.test(k)));
+}
+
+// ---- PWA artifacts ----
+{
+  const mf = JSON.parse(fs.readFileSync(path.join(DIST, 'manifest.webmanifest'), 'utf8'));
+  ok('pwa: manifest valid with icons', mf.name === '古文単語帳' && mf.icons.length >= 2);
+  const sw = fs.readFileSync(path.join(DIST, 'sw.js'), 'utf8');
+  ok('pwa: sw.js has versioned cache + core routes', /koten-\d+/.test(sw) && sw.includes("'./quiz'"));
+  const html = fs.readFileSync(path.join(DIST, 'index.html'), 'utf8');
+  ok('pwa: pages link manifest and register sw',
+     html.includes('manifest.webmanifest') && html.includes('serviceWorker') &&
+     ['icon-192.png', 'icon-512.png', 'apple-touch-icon.png'].every(f => fs.existsSync(path.join(DIST, f))));
 }
 
 // ---- quiz review queue (weak + expired known) ----
