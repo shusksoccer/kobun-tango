@@ -134,6 +134,46 @@ POLAR={14,77,87,140}
 KANGO={3,65,179,180,191,193,197}
 KEIGO_CARE={153,164,167,169}
 
+# ---------- authoritative meanings (意味一覧シート) ----------
+# 各語の意味・意味数は data/古文単語_意味付き.xlsx の「意味一覧」シートを正とする。
+# build 内の自動抽出（活用違いのクラスタリング）は例文↔意味の対応（mi）を出すためだけに使い、
+# 表示する意味リストはここで上書きする。
+import openpyxl, difflib
+MEAN_SRC=os.path.join(ROOT,'data','古文単語_意味付き.xlsx')
+def load_auth_meanings(path):
+    wb=openpyxl.load_workbook(path, data_only=True, read_only=True)
+    ws=next((s for s in wb.worksheets if '意味一覧' in s.title), wb.worksheets[0])
+    d={}
+    for row in ws.iter_rows(min_row=2, values_only=True):
+        if not row or row[0] is None: continue
+        ms=[str(c).strip() for c in row[3:9] if c is not None and str(c).strip()]
+        if ms: d[int(row[0])]=ms
+    return d
+AUTH=load_auth_meanings(MEAN_SRC)
+def _mnorm(s):
+    s=re.sub(r'[（(][^（）()]*[）)]','',s); return re.sub(r'[〔〕\s　「」]','',s)
+def _mfrags(nm):
+    return [p for p in re.split(r'[・／/]', _mnorm(nm)) if p]
+def _mbest(text, auth):
+    t=_mnorm(text); best,bs=0,-1.0
+    for i,nm in enumerate(auth):
+        sc=0.0
+        for fr in _mfrags(nm):
+            if t and fr and (t in fr or fr in t): sc=max(sc,0.9+0.1*min(len(t),len(fr))/max(len(t),len(fr)))
+            sc=max(sc,difflib.SequenceMatcher(None,t,fr).ratio())
+            m=difflib.SequenceMatcher(None,t,fr).find_longest_match(0,len(t),0,len(fr))
+            if fr: sc=max(sc,0.6*m.size/len(fr))
+        if sc>bs: bs,best=sc,i
+    return best,bs
+def remap_mi(imi, old_mi, old_meanings, auth):
+    # imi（活用形の解答）と旧・抽出ラベルの両方を意味一覧に照合し、最も近い番号(1始まり)を返す。
+    # 対応が無い例文(old_mi=0/imi空)は 0（意味番号なし＝「・」表示）を維持。
+    if not old_mi or not (imi and imi.strip()): return 0
+    if len(auth)==1: return 1
+    cands=[_mbest(imi,auth)]
+    if 1<=old_mi<=len(old_meanings): cands.append(_mbest(old_meanings[old_mi-1],auth))
+    return max(cands,key=lambda c:c[1])[0]+1
+
 # ---------- assemble base ----------
 WORD={}; base=[]
 for no,sub in df.groupby('no'):
@@ -159,6 +199,17 @@ for no,sub in df.groupby('no'):
     for e in ex: e['mi']=imi2fi.get(e['imi'],0)
     base.append({'no':no,'word':word,'pos':pos,'imp':importance(no),
                  'keigo':KEIGO.get(no,[]),'meanings':final,'examples':ex})
+
+# ---------- override meanings with authoritative 意味一覧, remap example mi ----------
+_miss=[w['no'] for w in base if w['no'] not in AUTH]
+if _miss: print('WARN: 意味一覧に無い番号:', _miss)
+for w in base:
+    auth=AUTH.get(w['no'])
+    if not auth: continue
+    old_means=w['meanings']
+    for e in w['examples']:
+        e['mi']=remap_mi(e['imi'], e['mi'], old_means, auth)
+    w['meanings']=list(auth)
 
 # ---------- relations (類義/対義/混同), per-sense ----------
 def S(*pairs): return list(pairs)

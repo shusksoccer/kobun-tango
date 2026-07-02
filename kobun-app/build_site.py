@@ -74,13 +74,14 @@ select,.minibtn{font-family:inherit;font-size:14px;color:var(--ink);background:v
 .known{flex:none;width:30px;height:30px;border-radius:50%;border:1.5px solid var(--rule);background:#fff6;
   color:var(--seiji);font-weight:900;font-size:15px;cursor:pointer;margin-top:5px;display:flex;align-items:center;justify-content:center}
 .known[aria-pressed="true"]{background:var(--seiji);border-color:var(--seiji);color:#fff}
+.known.partial{background:#e7e2d4;border-color:var(--seiji);color:var(--seiji)}
 .hwblock{flex:1;min-width:0}
 .hwline{display:flex;align-items:baseline;gap:9px;flex-wrap:wrap}
 .no{font-family:'Shippori Mincho B1',serif;color:var(--ink3);font-size:12px;border:1px solid var(--rule);border-radius:5px;padding:1px 6px}
 .word{font-size:clamp(26px,7.4vw,31px);font-weight:600;letter-spacing:.01em;line-height:1.18}
 .kanji{font-size:13px;color:var(--ink3);font-family:'Shippori Mincho B1',serif;margin-left:1px;white-space:nowrap}
 .body2{display:flex;flex-direction:column;gap:11px;margin-top:2px}
-.body2 .means{margin-top:9px}
+.body2 .means,.body2 .mlist{margin-top:9px}
 .noteprev{display:block;text-align:left;background:#f4eff5;border:1px solid #e2d8e4;border-radius:12px;
   padding:11px 13px;cursor:pointer;color:var(--ink);font-family:inherit;width:100%}
 .noteprev:active{transform:scale(.995)}
@@ -90,7 +91,7 @@ select,.minibtn{font-family:inherit;font-size:14px;color:var(--ink);background:v
   display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
 @media(min-width:680px){
   .body2{flex-direction:row;align-items:flex-start;gap:14px}
-  .body2 .means,.body2 .means.one{flex:1;margin-top:0}
+  .body2 .means,.body2 .means.one,.body2 .mlist{flex:1;margin-top:0}
   .noteprev{flex:0 0 46%;max-width:330px}
   .noteprev .snip{-webkit-line-clamp:6}
 }
@@ -122,6 +123,18 @@ select,.minibtn{font-family:inherit;font-size:14px;color:var(--ink);background:v
   width:1.25em;height:1.25em;border-radius:50%;background:#e7e2d4;color:var(--hanada-d);
   font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center}
 .means.one{padding-left:0;font-size:18px;line-height:1.5;color:var(--ink)}
+/* per-sense checkable meaning list */
+.mlist{margin:11px 0 2px;padding:0;list-style:none;display:grid;gap:6px}
+.mrow{display:flex;align-items:flex-start;gap:9px;font-size:17.5px;line-height:1.5;color:var(--ink)}
+.mchk{flex:none;width:1.5em;height:1.5em;margin-top:.06em;border-radius:50%;border:1.5px solid var(--rule);
+  background:#e7e2d4;color:var(--hanada-d);font-size:11px;font-weight:700;cursor:pointer;line-height:1;
+  display:flex;align-items:center;justify-content:center;padding:0}
+.mrow.on .mchk{background:var(--seiji);border-color:var(--seiji);color:#fff}
+.mtext{flex:1;min-width:0}
+.mrow.on .mtext{color:var(--ink3);text-decoration:line-through;text-decoration-color:var(--ink3)}
+.mrow.tested .mtext{font-weight:700}
+.testedtag{display:inline-block;font-size:10.5px;font-weight:700;color:var(--hanada-d);background:#f0e4c8;
+  border-radius:6px;padding:1px 7px;margin-left:7px;white-space:nowrap;vertical-align:middle}
 .themerow{display:flex;flex-wrap:wrap;gap:7px;margin-top:10px}
 .tag.th{opacity:.95}
 .discl{display:flex;flex-wrap:wrap;gap:8px;margin-top:11px}
@@ -247,8 +260,36 @@ function koUnder(s){return esc(s).replace(/\x01/g,'<u class="mk">').replace(/\x0
 function blankify(s){return esc(s).replace(/〔[\s　]*[〕\]）]/g,'<span class="blank">〔　　　〕</span>');}
 function koRed(s){return esc(s).replace(/\x01/g,'<span class="exred">').replace(/\x02/g,'</span>');}
 function ykMask(yb,imi){return esc(yb).replace(/〔[\s　]*[〕\]）]/g,'<span class="exmask" onclick="this.classList.toggle(\'open\')" tabindex="0">'+esc(imi)+'</span>');}
-const known=new Set((()=>{try{return JSON.parse(localStorage.getItem('koten_known')||'[]')}catch(e){return[]}})());
+/* 覚えたチェックは意味ごと。キーは "番号:意味番号"（意味番号は1始まり、意味リストの順）。
+   旧データ（番号だけの配列＝語単位）はその語の全意味を覚えた扱いに移行する。 */
+const known=(()=>{const s=new Set();let raw=[];
+  try{raw=JSON.parse(localStorage.getItem('koten_known')||'[]');}catch(e){}
+  raw.forEach(v=>{const str=String(v);
+    if(str.indexOf(':')>=0){s.add(str);}
+    else{const w=DB.words.find(x=>x.no===+str);const n=w?(w.meanings.length||1):1;
+      for(let i=1;i<=n;i++)s.add(str+':'+i);}});
+  return s;})();
 function saveKnown(){try{localStorage.setItem('koten_known',JSON.stringify([...known]))}catch(e){}}
+function sk(no,i){return no+':'+i;}
+function totalSenses(w){return w.meanings.length||1;}
+function knownCount(w){let c=0;for(let i=1;i<=totalSenses(w);i++)if(known.has(sk(w.no,i)))c++;return c;}
+function wordFull(w){return knownCount(w)===totalSenses(w);}
+function masteredCount(){return DB.words.filter(wordFull).length;}
+/* 意味ごとのチェックリスト（辞典カード／クイズの答え表示で共用）。tested=強調する意味番号(なければ0) */
+function senseChecklist(w,tested){const multi=w.meanings.length>1;
+  return `<ul class="mlist">`+w.meanings.map((m,k)=>{const i=k+1,on=known.has(sk(w.no,i)),t=tested===i;
+    const face=on?'✓':(multi?String(i):'');
+    return `<li class="mrow${on?' on':''}${t?' tested':''}">`
+      +`<button class="mchk" data-no="${w.no}" data-si="${i}" aria-pressed="${on}" aria-label="この意味を覚えた（${esc(m)}）">${face}</button>`
+      +`<span class="mtext">${esc(m)}${t?'<span class="testedtag">この問題の意味</span>':''}</span></li>`;}).join('')+`</ul>`;}
+/* .mchk のクリックを配線。cb(no,i,now) は状態変更後に呼ばれる */
+function bindSenseChecks(root,cb){root.querySelectorAll('.mchk').forEach(b=>b.onclick=()=>{
+  const no=+b.dataset.no,i=+b.dataset.si,key=sk(no,i),now=!known.has(key);
+  now?known.add(key):known.delete(key);saveKnown();
+  const w=DB.words.find(x=>x.no===no),multi=w&&w.meanings.length>1;
+  b.setAttribute('aria-pressed',now);b.textContent=now?'✓':(multi?String(i):'');
+  b.closest('.mrow').classList.toggle('on',now);
+  if(cb)cb(no,i,now);});}
 """
 
 INDEX_BODY = r"""
@@ -305,8 +346,8 @@ function setChip(f,v){state.sel[f].add(v);
 function relJump(no){clearFilters();state.q='';$('#q').value='';state.view='all';$('#view').value='all';render();
   const el=$('#w'+no);if(el){if(el.scrollIntoView)el.scrollIntoView({behavior:'smooth',block:'center'});el.classList.remove('flash');void el.offsetWidth;el.classList.add('flash');}}
 function match(w){const s=state.sel;
-  if(state.view==='unknown'&&known.has(w.no))return false;
-  if(state.view==='known'&&!known.has(w.no))return false;
+  if(state.view==='unknown'&&wordFull(w))return false;
+  if(state.view==='known'&&!wordFull(w))return false;
   if(s.imp.size&&!s.imp.has(w.imp))return false;
   if(s.pos.size&&!s.pos.has(w.pos))return false;
   if(s.keigo.size&&!w.keigo.some(k=>s.keigo.has(k)))return false;
@@ -330,20 +371,19 @@ function relInner(w){
         it.map(r=>`<button class="relw" data-no="${r.no}">${esc(r.word)}<small>${esc(r.gloss)}</small></button>`).join('');}});h+='</div>';}
   return h;}
 function card(w){
-  const learned=known.has(w.no);
+  const kc=knownCount(w),tot=totalSenses(w),full=kc===tot;
   const meta=`<span class="pos">${esc(w.pos)}</span>`+w.keigo.map(k=>`<span class="kg" style="--c:${KEIGO_C[k]}">${esc(k)}</span>`).join('')
     +w.themes.map(t=>`<button class="tag th" data-f="theme" data-v="${esc(t)}" style="--c:${THEME_C[t]}">${esc(t)}</button>`).join('')
     +w.flags.map(t=>`<button class="tag flag" data-f="flag" data-v="${esc(t)}" style="--c:${FLAG_C[t]}">${esc(t)}</button>`).join('');
-  const means=w.meanings.length>1?`<ol class="means">${w.meanings.map(m=>`<li>${esc(m)}</li>`).join('')}</ol>`
-    :`<div class="means one">${esc(w.meanings[0]||'')}</div>`;
+  const means=senseChecklist(w,0);
   const exN=w.examples.length, relN=(w.related||[]).length;
   const ex=w.examples.map(e=>`<div class="ex">
     <div class="ko mincho">${koRed(e.koU)}</div>
     <div class="yk">${ykMask(e.ykBlank,e.imi)}</div>
     <div class="src">出典：${esc(e.src||'—')}</div></div>`).join('');
-  return `<article class="card${learned?' learned':''}" id="w${w.no}" style="--impc:${IMP_C[w.imp]}">
+  return `<article class="card${full?' learned':''}" id="w${w.no}" style="--impc:${IMP_C[w.imp]}">
     <div class="ctop">
-      <button class="known" data-no="${w.no}" aria-pressed="${learned}" aria-label="覚えた">${learned?'✓':''}</button>
+      <button class="known${kc&&!full?' partial':''}" data-no="${w.no}" aria-pressed="${full}" aria-label="すべての意味を覚えた" title="全${tot}中 ${kc} 覚えた">${full?'✓':(kc||'')}</button>
       <div class="hwblock">
         <div class="hwline"><span class="no">${w.no}</span><span class="word mincho">${esc(w.word)}</span>${w.kanji?`<span class="kanji">〔${esc(w.kanji)}〕</span>`:''}
           <span class="imp" style="color:${IMP_C[w.imp]}">${esc(w.imp)}</span></div>
@@ -358,9 +398,15 @@ function card(w){
     <div class="panel" data-p="ex">${ex}</div>
     ${relN?`<div class="panel" data-p="rel">${relInner(w)}</div>`:''}
   </article>`;}
+function setCount(shown){$('#count').innerHTML=`${shown} 語　<b>既習 ${masteredCount()}</b>`;}
+function paintMaster(cardEl,w){const kc=knownCount(w),tot=totalSenses(w),full=kc===tot;
+  cardEl.classList.toggle('learned',full);
+  const c=cardEl.querySelector('.known');
+  c.setAttribute('aria-pressed',full);c.classList.toggle('partial',kc>0&&!full);
+  c.textContent=full?'✓':(kc||'');c.title=`全${tot}中 ${kc} 覚えた`;}
 function render(){
   let arr=DB.words.filter(match);sortList(arr);
-  $('#count').innerHTML=`${arr.length} 語　<b>既習 ${known.size}</b>`;
+  setCount(arr.length);
   const L=$('#list');
   if(!arr.length){L.innerHTML='<div class="empty">該当する単語がありません。<br>検索語やタグ・表示条件を見直してください。</div>';return;}
   L.innerHTML=arr.map(card).join('');
@@ -371,12 +417,19 @@ function render(){
   L.querySelectorAll('.noteprev').forEach(b=>b.onclick=()=>openNote(+b.dataset.no));
   L.querySelectorAll('.tag').forEach(t=>t.onclick=()=>setChip(t.dataset.f,t.dataset.v));
   L.querySelectorAll('.relw').forEach(r=>r.onclick=()=>relJump(r.dataset.no));
+  bindSenseChecks(L,no=>{const cardEl=L.querySelector('#w'+no);
+    if(cardEl)paintMaster(cardEl,DB.words.find(x=>x.no===no));
+    setCount(L.querySelectorAll('.card').length);
+    if(state.view!=='all')render();});
   L.querySelectorAll('.known').forEach(k=>k.onclick=()=>{
-    const no=+k.dataset.no;const now=!known.has(no);
-    now?known.add(no):known.delete(no);saveKnown();
-    const card=k.closest('.card');card.classList.toggle('learned',now);
-    k.setAttribute('aria-pressed',now);k.textContent=now?'✓':'';
-    $('#count').innerHTML=`${$('#list').querySelectorAll('.card').length} 語　<b>既習 ${known.size}</b>`;
+    const no=+k.dataset.no,w=DB.words.find(x=>x.no===no),full=wordFull(w);
+    for(let i=1;i<=totalSenses(w);i++){const key=sk(no,i);full?known.delete(key):known.add(key);}
+    saveKnown();
+    const cardEl=k.closest('.card');
+    cardEl.querySelectorAll('.mchk').forEach(b=>{const on=known.has(sk(no,+b.dataset.si));
+      b.setAttribute('aria-pressed',on);b.textContent=on?'✓':(w.meanings.length>1?b.dataset.si:'');
+      b.closest('.mrow').classList.toggle('on',on);});
+    paintMaster(cardEl,w);setCount(L.querySelectorAll('.card').length);
     if(state.view!=='all')render();});
   if(location.hash){const el=document.querySelector(location.hash);
     if(el){if(el.scrollIntoView)el.scrollIntoView({behavior:'smooth',block:'center'});el.classList.add('flash');}}}
@@ -513,16 +566,22 @@ function show(){const w=deck[idx];cur.w=w;const e=w.examples[Math.random()*w.exa
   $('#showBtn').onclick=revealAns;}
 function revealAns(){const w=cur.w,e=cur.e;let h='';
   if(mode==='fwd'){
-    h=`<div class="ans" style="margin-bottom:8px">${meansList(w)}</div>`
+    h=`<div class="qkolabel">意味（覚えたらチェック）</div>`+senseChecklist(w,cur.e.mi||0)
      +`<div class="tr">訳：${esc((e.yk||'').replace(BLK,e.imi))}</div>`;
   }else{
     h=`<div class="ans mincho">${esc(w.word)}</div>`
+     +`<div class="qkolabel">意味（覚えたらチェック）</div>`+senseChecklist(w,0)
      +`<div class="qexlist">`+w.examples.map(ex=>`<div class="qex2"><span class="qexn">${w.meanings.length>1?(ex.mi||'・'):'・'}</span><div class="qexbody"><div class="full mincho">${koUnder(ex.koU)}</div><div class="qextr">${esc((ex.yk||'').replace(BLK,ex.imi))}</div></div></div>`).join('')+`</div>`;}
   h+=`<a class="jump" href="index.html#w${w.no}">辞典で詳しく確認 →</a>`;
   $('#reveal').innerHTML=h;$('#reveal').classList.add('show');
+  bindSenseChecks($('#reveal'));
   $('#btns').innerHTML='<button class="qb again" id="againBtn">あいまい</button><button class="qb know" id="knowBtn">覚えた</button>';
   $('#againBtn').onclick=()=>{weak.push(w);next();};
-  $('#knowBtn').onclick=()=>{known.add(w.no);saveKnown();knownRun++;next();};}
+  $('#knowBtn').onclick=()=>{const w=cur.w;
+    if(mode==='fwd'){const i=cur.e.mi||(w.meanings.length<=1?1:0);
+      if(i)known.add(sk(w.no,i));else for(let k=1;k<=totalSenses(w);k++)known.add(sk(w.no,k));}
+    else{for(let k=1;k<=totalSenses(w);k++)known.add(sk(w.no,k));}
+    saveKnown();knownRun++;next();};}
 function next(){idx++;if(idx>=deck.length)finish();else show();}
 function finish(){$('#play').hidden=true;$('#done').hidden=false;$('#bar').style.width='100%';
   $('#score').textContent=`${knownRun} / ${deck.length}`;
