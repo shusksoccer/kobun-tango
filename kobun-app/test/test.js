@@ -50,6 +50,15 @@ const ok = (name, cond) => { (cond ? pass++ : fail++); console.log((cond ? 'PASS
   ok('index: master toggle clears all senses',
      doc.querySelectorAll('#w7 .mrow.on').length === 0 &&
      !doc.querySelector('#w7').classList.contains('learned'));
+  // sense check writes a date (SRS-lite)
+  doc.querySelector('#w7 .mlist .mchk').click();
+  ok('index: sense check records date in koten_known_at',
+     !!JSON.parse(d.window.localStorage.getItem('koten_known_at') || '{}')['7:1']);
+  // kana-normalized search: modern kana finds historical-kana headword
+  d.window.eval("state.q='おかし';render()");
+  ok('index: search normalizes historical kana (おかし → をかし)',
+     !!doc.querySelector('#w15') && !doc.querySelector('#w1'));
+  d.window.eval("state.q='';render()");
   // legacy word-level data (a bare number) migrates to all senses of that word
   const dm = new JSDOM(fs.readFileSync(path.join(DIST, 'index.html'), 'utf8'),
     { runScripts: 'dangerously', pretendToBeVisual: true, url: 'https://kobun.test/index.html',
@@ -85,6 +94,31 @@ const ok = (name, cond) => { (cond ? pass++ : fail++); console.log((cond ? 'PASS
      doc.querySelector('#qbody').innerHTML.includes('<u class="mk">') &&
      !doc.querySelector('#qbody .qexko').innerHTML.includes('<u'));
   ok('quiz rev: meaning numbers map to examples', [...doc.querySelectorAll('#qbody .qexn')].every(n => /\d|・/.test(n.textContent)));
+  // SRS-lite: あいまい persists, 覚えた clears weak + records date
+  w.eval("localStorage.removeItem('koten_weak');weakSet.clear();mode='fwd';start(pool());idx=deck.findIndex(x=>x.no===2);show();revealAns();$('#againBtn').click();");
+  ok('quiz: あいまい persists word to koten_weak',
+     JSON.parse(w.localStorage.getItem('koten_weak') || '[]').includes(2));
+  w.eval("idx=deck.findIndex(x=>x.no===2);show();revealAns();$('#knowBtn').click();");
+  ok('quiz: 覚えた removes from koten_weak and records date',
+     !JSON.parse(w.localStorage.getItem('koten_weak') || '[]').includes(2) &&
+     Object.keys(JSON.parse(w.localStorage.getItem('koten_known_at') || '{}')).some(k => /^2:/.test(k)));
+}
+
+// ---- quiz review queue (weak + expired known) ----
+{
+  const qr = new JSDOM(fs.readFileSync(path.join(DIST, 'quiz.html'), 'utf8'),
+    { runScripts: 'dangerously', pretendToBeVisual: true, url: 'https://kobun.test/quiz.html',
+      beforeParse(win) {
+        win.localStorage.setItem('koten_known', JSON.stringify(['5:1']));
+        win.localStorage.setItem('koten_known_at', JSON.stringify({ '5:1': Date.now() - 40 * 24 * 3600 * 1000 }));
+        win.localStorage.setItem('koten_weak', JSON.stringify([9]));
+      } });
+  const rnos = qr.window.eval('reviewWords().map(w=>w.no)');
+  ok('quiz: review queue = あいまい + 30日期限切れの既習',
+     rnos.includes(5) && rnos.includes(9) && rnos.length === 2 &&
+     !qr.window.document.querySelector('#reviewBox').hidden);
+  qr.window.document.querySelector('#reviewStart').click();
+  ok('quiz: 復習キューで始めるが復習デッキを組む', qr.window.eval('deck.length') === 2);
 }
 
 console.log(`\n${pass} passed, ${fail} failed`);

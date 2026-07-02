@@ -70,8 +70,10 @@ select,.minibtn{font-family:inherit;font-size:14px;color:var(--ink);background:v
 .card.learned{opacity:.5}
 .card.learned .word{text-decoration:line-through;text-decoration-color:var(--ink3)}
 .ctop{display:flex;align-items:flex-start;gap:10px}
-.known{flex:none;width:30px;height:30px;border-radius:50%;border:1.5px solid var(--rule);background:#fff6;
-  color:var(--seiji);font-weight:900;font-size:15px;cursor:pointer;margin-top:5px;display:flex;align-items:center;justify-content:center}
+.known{flex:none;width:34px;height:34px;border-radius:50%;border:1.5px solid var(--rule);background:#fff6;
+  color:var(--seiji);font-weight:900;font-size:15px;cursor:pointer;margin-top:3px;display:flex;align-items:center;justify-content:center;
+  position:relative}
+.known::before{content:'';position:absolute;inset:-5px}/* タップ領域を44pxに拡大 */
 .known[aria-pressed="true"]{background:var(--seiji);border-color:var(--seiji);color:#fff}
 .known.partial{background:#e7e2d4;border-color:var(--seiji);color:var(--seiji)}
 .hwblock{flex:1;min-width:0}
@@ -112,7 +114,7 @@ select,.minibtn{font-family:inherit;font-size:14px;color:var(--ink);background:v
 .metaline{display:flex;flex-wrap:wrap;gap:6px;margin-top:7px;align-items:center}
 .pos{font-size:11.5px;font-weight:700;color:#fff;background:#7a7264;border-radius:6px;padding:3px 8px}
 .kg{font-size:11.5px;font-weight:700;color:#fff;background:var(--c,#666);border-radius:6px;padding:3px 8px}
-.tag{font-size:12px;border-radius:999px;padding:4px 11px;cursor:pointer;border:1px solid var(--c,var(--rule));
+.tag{font-size:12px;border-radius:999px;padding:6px 12px;cursor:pointer;border:1px solid var(--c,var(--rule));
   color:var(--c,var(--ink2));background:transparent;line-height:1.3}
 .tag.flag{border-style:dashed;font-weight:700}
 .tag:active{transform:scale(.97)}
@@ -123,11 +125,12 @@ select,.minibtn{font-family:inherit;font-size:14px;color:var(--ink);background:v
   font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center}
 .means.one{padding-left:0;font-size:18px;line-height:1.5;color:var(--ink)}
 /* per-sense checkable meaning list */
-.mlist{margin:11px 0 2px;padding:0;list-style:none;display:grid;gap:6px}
+.mlist{margin:11px 0 2px;padding:0;list-style:none;display:grid;gap:8px}
 .mrow{display:flex;align-items:flex-start;gap:9px;font-size:17.5px;line-height:1.5;color:var(--ink)}
-.mchk{flex:none;width:1.5em;height:1.5em;margin-top:.06em;border-radius:50%;border:1.5px solid var(--rule);
+.mchk{flex:none;width:28px;height:28px;border-radius:50%;border:1.5px solid var(--rule);
   background:#e7e2d4;color:var(--hanada-d);font-size:11px;font-weight:700;cursor:pointer;line-height:1;
-  display:flex;align-items:center;justify-content:center;padding:0}
+  display:flex;align-items:center;justify-content:center;padding:0;position:relative}
+.mchk::before{content:'';position:absolute;inset:-6px}/* タップ領域を40pxに拡大 */
 .mrow.on .mchk{background:var(--seiji);border-color:var(--seiji);color:#fff}
 .mtext{flex:1;min-width:0}
 .mrow.on .mtext{color:var(--ink3);text-decoration:line-through;text-decoration-color:var(--ink3)}
@@ -175,6 +178,8 @@ select,.minibtn{font-family:inherit;font-size:14px;color:var(--ink);background:v
 .modebtn{text-align:left;font-family:inherit;background:#fff8;border:1px solid var(--rule);border-radius:12px;padding:13px 15px;cursor:pointer}
 .modebtn.on{border-color:var(--hanada);background:#eaf0f4;box-shadow:inset 0 0 0 1px var(--hanada)}
 .modebtn b{font-size:15px}.modebtn span{display:block;color:var(--ink2);font-size:12px;margin-top:3px}
+.reviewbox{border:1px dashed var(--seiji);border-radius:12px;background:#eef3ee;padding:11px 13px}
+.reviewinfo{font-size:13.5px;color:var(--ink2);font-weight:600}
 .bignum{font-family:'Shippori Mincho B1',serif;font-size:30px;color:var(--hanada-d);line-height:1}
 .start{font-family:inherit;font-size:17px;font-weight:700;background:var(--hanada);color:#fff;border:0;border-radius:12px;
   padding:15px 30px;cursor:pointer;box-shadow:var(--shadow);width:100%;max-width:360px}
@@ -262,6 +267,13 @@ select,.minibtn{font-family:inherit;font-size:14px;color:var(--ink);background:v
       <div style="margin-left:auto;text-align:right"><div class="bignum" id="pcount">0</div>
         <div style="font-size:11px;color:var(--ink2)">範囲の語数</div></div>
     </div></div>
+    <div class="field reviewbox" id="reviewBox" hidden><h4>復習キュー</h4>
+      <div class="row" style="align-items:center;gap:10px">
+        <span class="reviewinfo" id="reviewInfo"></span>
+        <button class="minibtn" id="reviewStart" style="margin-left:auto;min-height:44px">復習キューで始める</button>
+      </div>
+      <p class="help" style="margin:6px 0 0">「あいまい」にした語と、覚えたチェックから30日たった語をまとめて出題します。</p>
+    </div>
     <div style="text-align:center;margin-top:6px"><button class="start" id="startBtn">はじめる</button></div>
   </section>
 
@@ -313,7 +325,28 @@ const known=(()=>{const s=new Set();let raw=[];
     else{const w=DB.words.find(x=>x.no===+str);const n=w?(w.meanings.length||1):1;
       for(let i=1;i<=n;i++)s.add(str+':'+i);}});
   return s;})();
-function saveKnown(){try{localStorage.setItem('koten_known',JSON.stringify([...known]))}catch(e){}}
+/* チェック日時（SRS-lite）。キーごとに epoch ms。日付の無い既存キーは移行時に現在時刻を入れる */
+const knownAt=(()=>{let o={};try{o=JSON.parse(localStorage.getItem('koten_known_at')||'{}')||{}}catch(e){}
+  const now=Date.now();known.forEach(k=>{if(!o[k])o[k]=now;});
+  Object.keys(o).forEach(k=>{if(!known.has(k))delete o[k];});
+  return o;})();
+function saveKnown(){try{localStorage.setItem('koten_known',JSON.stringify([...known]));
+  localStorage.setItem('koten_known_at',JSON.stringify(knownAt));}catch(e){}}
+function addKnown(key){known.add(key);knownAt[key]=Date.now();}
+function delKnown(key){known.delete(key);delete knownAt[key];}
+/* あいまい（弱点）語の永続化。番号の配列 */
+const weakSet=new Set((()=>{try{return JSON.parse(localStorage.getItem('koten_weak')||'[]')}catch(e){return[]}})());
+function saveWeak(){try{localStorage.setItem('koten_weak',JSON.stringify([...weakSet]))}catch(e){}}
+/* 復習期限：チェックから30日経過した既習意味は「復習待ち」 */
+const DUE_MS=30*24*3600*1000;
+function senseDue(key){return known.has(key)&&(Date.now()-(knownAt[key]||0))>DUE_MS;}
+function wordDue(w){for(let i=1;i<=totalSenses(w);i++)if(senseDue(sk(w.no,i)))return true;return false;}
+function reviewWords(){return DB.words.filter(w=>weakSet.has(w.no)||wordDue(w));}
+/* 検索用の仮名正規化：カタカナ→ひらがな、歴史的仮名（ゐゑを・ぢづ）を現代仮名に寄せる */
+function normQ(s){return (s||'').toLowerCase()
+  .replace(/[ァ-ヶ]/g,c=>String.fromCharCode(c.charCodeAt(0)-0x60))
+  .replace(/[ゐ]/g,'い').replace(/[ゑ]/g,'え').replace(/を/g,'お')
+  .replace(/ぢ/g,'じ').replace(/づ/g,'ず').replace(/[〜～]/g,'');}
 function sk(no,i){return no+':'+i;}
 function totalSenses(w){return w.meanings.length||1;}
 function knownCount(w){let c=0;for(let i=1;i<=totalSenses(w);i++)if(known.has(sk(w.no,i)))c++;return c;}
@@ -329,7 +362,7 @@ function senseChecklist(w,tested){const multi=w.meanings.length>1;
 /* .mchk のクリックを配線。cb(no,i,now) は状態変更後に呼ばれる */
 function bindSenseChecks(root,cb){root.querySelectorAll('.mchk').forEach(b=>b.onclick=()=>{
   const no=+b.dataset.no,i=+b.dataset.si,key=sk(no,i),now=!known.has(key);
-  now?known.add(key):known.delete(key);saveKnown();
+  now?addKnown(key):delKnown(key);saveKnown();
   const w=DB.words.find(x=>x.no===no),multi=w&&w.meanings.length>1;
   b.setAttribute('aria-pressed',now);b.textContent=now?'✓':(multi?String(i):'');
   b.closest('.mrow').classList.toggle('on',now);
@@ -350,7 +383,13 @@ function pool(){return DB.words.filter(w=>{
   if(sel.pos.size&&!sel.pos.has(w.pos))return false;
   if(sel.theme.size&&!w.themes.some(t=>sel.theme.has(t)))return false;
   if(sel.flag.size&&!w.flags.some(t=>sel.flag.has(t)))return false;return true;});}
-function updateCount(){const n=pool().length;$('#pcount').textContent=n;$('#startBtn').disabled=n===0;}
+function updateCount(){const n=pool().length;$('#pcount').textContent=n;$('#startBtn').disabled=n===0;updateReview();}
+function updateReview(){const rw=reviewWords();
+  $('#reviewBox').hidden=rw.length===0;
+  if(!rw.length)return;
+  const nW=rw.filter(w=>weakSet.has(w.no)).length;
+  $('#reviewInfo').textContent=`${rw.length}語（あいまい ${nW}・期限切れ ${rw.length-nW}）`;}
+$('#reviewStart').onclick=()=>{const rw=reviewWords();if(rw.length)start(rw);};
 updateCount();
 let deck=[],idx=0,knownRun=0,weak=[];
 function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[a[i],a[j]]=[a[j],a[i]];}return a;}
@@ -405,19 +444,19 @@ function revealAns(){const w=cur.w,e=cur.e;let h='';
   $('#reveal').innerHTML=h;$('#reveal').classList.add('show');
   bindSenseChecks($('#reveal'));
   $('#btns').innerHTML='<button class="qb again" id="againBtn">あいまい</button><button class="qb know" id="knowBtn">覚えた</button>';
-  $('#againBtn').onclick=()=>{weak.push(w);next();};
+  $('#againBtn').onclick=()=>{weak.push(w);weakSet.add(w.no);saveWeak();next();};
   $('#knowBtn').onclick=()=>{const w=cur.w;
     if(mode==='fwd'){const i=cur.e.mi||(w.meanings.length<=1?1:0);
-      if(i)known.add(sk(w.no,i));else for(let k=1;k<=totalSenses(w);k++)known.add(sk(w.no,k));}
-    else{for(let k=1;k<=totalSenses(w);k++)known.add(sk(w.no,k));}
-    saveKnown();knownRun++;next();};}
+      if(i)addKnown(sk(w.no,i));else for(let k=1;k<=totalSenses(w);k++)addKnown(sk(w.no,k));}
+    else{for(let k=1;k<=totalSenses(w);k++)addKnown(sk(w.no,k));}
+    saveKnown();weakSet.delete(w.no);saveWeak();knownRun++;next();};}
 function next(){idx++;if(idx>=deck.length)finish();else show();}
 function finish(){$('#play').hidden=true;$('#done').hidden=false;$('#bar').style.width='100%';
   $('#score').textContent=`${knownRun} / ${deck.length}`;
   $('#donemsg').textContent=weak.length?`「あいまい」が ${weak.length} 語。復習しましょう。`:'すべて「覚えた」！おみごと。';
   $('#reviewWeak').style.display=weak.length?'':'none';}
 $('#startBtn').onclick=()=>start(pool());
-$('#quit').onclick=()=>{$('#play').hidden=true;$('#setup').hidden=false;};
+$('#quit').onclick=()=>{$('#play').hidden=true;$('#setup').hidden=false;updateCount();};
 $('#back').onclick=()=>{$('#done').hidden=true;$('#setup').hidden=false;updateCount();};
 $('#againAll').onclick=()=>start(deck);$('#reviewWeak').onclick=()=>start(weak);
 </script>
