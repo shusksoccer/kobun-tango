@@ -38,6 +38,15 @@ data/explanations.md ───────┘                                   
 - 検索は仮名正規化（カタカナ→ひらがな、ゐ・ゑ・を・ぢ・づ→現代仮名）した見出し・漢字・意味・タグに対して部分一致（`normQ`）。入力は150msデバウンス。
 - 同一フォルダ配置が前提（相対リンク）。
 
+## アクセス制限（合言葉方式）
+
+- `kobun-app/functions/_middleware.js`（Cloudflare Pages Functions）が全リクエストを検査。
+  未認証のページ遷移は `/login`（合言葉入力画面）へ、サブリソースは 401。
+- 合言葉は Pages の暗号化シークレット `PASSCODE`（リポジトリには置かない）。
+  変更: `echo "新しい合言葉" | npx wrangler pages secret put PASSCODE --project-name kobun-tango` → 再デプロイ。
+- 認証済みの印は `SHA-256(PASSCODE+salt)` の HttpOnly クッキー（180日）。合言葉を変えると全端末で再ログイン。
+- 全応答に `X-Robots-Tag: noindex` を付与（検索エンジン非掲載）。
+
 ## ビルド再現の注意
 
 - 文字コードは全て UTF-8。
