@@ -291,7 +291,10 @@ function esc(s){return (s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>'
 function koUnder(s){return esc(s).replace(/\x01/g,'<u class="mk">').replace(/\x02/g,'</u>');}
 function blankify(s){return esc(s).replace(/〔[\s　]*[〕\]）]/g,'<span class="blank">〔　　　〕</span>');}
 function koRed(s){return esc(s).replace(/\x01/g,'<span class="exred">').replace(/\x02/g,'</span>');}
-function ykMask(yb,imi){return esc(yb).replace(/〔[\s　]*[〕\]）]/g,'<span class="exmask" onclick="this.classList.toggle(\'open\')" tabindex="0">'+esc(imi)+'</span>');}
+/* 空欄ごとの解答は訳全文(yk)の〔…〕から順に拾う。「まったく～ない」型の呼応表現を
+   〔まったく〕…〔ない〕と分けて埋めるため（拾えない空欄は imi で代用） */
+function ykAns(yk){const a=[];String(yk||'').replace(/〔[\s　]*([^〔〕]*?)[\s　]*〕/g,(m,g)=>{a.push(g);return m;});return a;}
+function ykMask(e){const a=ykAns(e.yk);let i=0;return esc(e.ykBlank).replace(/〔[\s　]*[〕\]）]/g,()=>'<span class="exmask" onclick="this.classList.toggle(\'open\')" tabindex="0">'+esc(a[i++]||e.imi)+'</span>');}
 /* 覚えたチェックは意味ごと。キーは "番号:意味番号"（意味番号は1始まり、意味リストの順）。
    旧データ（番号だけの配列＝語単位）はその語の全意味を覚えた扱いに移行する。 */
 const known=(()=>{const s=new Set();let raw=[];
@@ -458,7 +461,7 @@ function card(w){
   const exN=w.examples.length, relN=(w.related||[]).length;
   const ex=w.examples.map(e=>`<div class="ex">
     <div class="ko mincho">${koRed(e.koU)}</div>
-    <div class="yk">${ykMask(e.ykBlank,e.imi)}</div>
+    <div class="yk">${ykMask(e)}</div>
     <div class="src">出典：${srcLine(e.src)}</div></div>`).join('');
   return `<article class="card${full?' learned':''}" id="w${w.no}" style="--impc:${IMP_C[w.imp]}">
     <div class="ctop">
@@ -655,7 +658,9 @@ function start(list){deck=list.slice();
   const n=parseInt($('#num').value,10);if(n>0)deck=deck.slice(0,n);
   idx=0;knownRun=0;weak=[];$('#setup').hidden=true;$('#done').hidden=true;$('#play').hidden=false;show();}
 const BLK=/〔[\s　]*[〕\]）]/g;
-function ykUnder(yb,imi){return esc(yb).replace(/〔[\s　]*[〕\]）]/g,`<u class="mk">${esc(imi)}</u>`);}
+/* 空欄ごとの解答は訳全文(yk)の〔…〕から順に拾う（「まったく～ない」型を分けて埋める。拾えない空欄は imi） */
+function ykUnder(e){const a=[];String(e.yk||'').replace(/〔[\s　]*([^〔〕]*?)[\s　]*〕/g,(m,g)=>{a.push(g);return m;});
+  let i=0;return esc(e.ykBlank).replace(/〔[\s　]*[〕\]）]/g,()=>`<u class="mk">${esc(a[i++]||e.imi)}</u>`);}
 let cur={};
 function badge(t,c,cls){return `<span class="${cls}" style="background:${c}">${esc(t)}</span>`;}
 function meansList(w,cls){
@@ -745,7 +750,7 @@ function show(){const w=deck[idx];cur.w=w;const e=w.examples[Math.random()*w.exa
     $('#qbody').innerHTML=`<div class="qkolabel">例文（空欄に入る古語を答える／下線は訳のヒント）</div>`
       +`<div class="qexlist">`+w.examples.map(e=>`<div class="qex2"><span class="qexn">${w.meanings.length>1?(e.mi||'・'):'・'}</span>`
         +`<div class="qexbody"><div class="qexko mincho">${blankify(e.koBlank)}${e.src?`<span class="qexsrc">（${esc(e.src)}）</span>`:''}</div>`
-        +`<div class="qextr">訳：${ykUnder(e.ykBlank,e.imi)}</div></div></div>`).join('')+`</div>`;}
+        +`<div class="qextr">訳：${ykUnder(e)}</div></div></div>`).join('')+`</div>`;}
   $('#btns').innerHTML='<button class="qb show" id="showBtn">答えを見る</button>';
   $('#showBtn').onclick=revealAns;}
 function revealAns(){const w=cur.w,e=cur.e;let h='';
