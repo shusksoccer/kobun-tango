@@ -40,7 +40,7 @@ button{width:100%;margin-top:12px;font-size:16px;font-weight:700;padding:13px;bo
 .err{color:#8c414c;font-size:13px;font-weight:700;margin:10px 0 0;min-height:1em}
 </style></head><body><form class="card" method="POST" action="/login">
 <div class="seal">古</div><h1>古文単語帳</h1>
-<p>このサイトは生徒専用です。<br>授業で伝えられた合言葉を入力してください。</p>
+<p>このサイトは県立浦和高等学校の生徒専用です。<br>（URLや合言葉の外部流出厳禁）<br>授業で伝えられた合言葉を入力してください。</p>
 <input name="passcode" type="password" autocomplete="current-password" placeholder="合言葉" required autofocus>
 <button type="submit">入る</button>
 <div class="err">${msg || ''}</div>
